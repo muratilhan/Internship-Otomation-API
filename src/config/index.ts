@@ -10,7 +10,7 @@ let defaultConfig = {
   logging: true,
 };
 
-if (env === "production") {
+if (false) {
   defaultConfig = {
     dbUrl: process.env.DATABASE_URL_PROD,
     jwtSecret: process.env.JWT_SECRET_PROD,
