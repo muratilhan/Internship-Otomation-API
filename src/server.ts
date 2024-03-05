@@ -9,8 +9,4 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // query string to js object
 
-app.get("/", (req, res) => {
-  res.json({ message: "this is first req" });
-});
-
 export default app;
