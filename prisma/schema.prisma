@@ -13,8 +13,22 @@ datasource db {
   url      = env("DATABASE_URL_DEV")
 }
 
+enum USER_TYPE {
+  STUDENT
+  COMISSION
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  email     String @unique
+  password  String
+  name      String
+  last_name String
+
+  user_type USER_TYPE @default(STUDENT)
+
+  tc_number  String?
+  student_id String?
 }
