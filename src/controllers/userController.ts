@@ -1,12 +1,25 @@
 import prisma from "../db";
+import errorCodes from "../enums/errorCodes";
 import {
   comparePasswords,
   createJWT,
   hashPassword,
-} from "../middlewares/authMiddleware";
+} from "../middlewares/auth.middleware";
+import { BadRequestError } from "../errors/BadRequestError";
+import { AuthenticationError } from "../errors/AuthenticationError";
 
 export const createNewUser = async (req, res, next) => {
   try {
+    const isUser = await prisma.user.findUnique({
+      where: {
+        email: req.body.email,
+      },
+    });
+
+    if (isUser) {
+      throw new BadRequestError(errorCodes.USER_ALREADY_SIGNUP);
+    }
+
     const user = await prisma.user.create({
       data: {
         email: req.body.email,
@@ -19,25 +32,27 @@ export const createNewUser = async (req, res, next) => {
     const token = createJWT(user);
     res.json({ token });
   } catch (e) {
-    e.type = "input";
     next(e);
   }
 };
 
-export const signin = async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email: req.body.email,
-    },
-  });
+export const signin = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: req.body.email,
+      },
+    });
 
-  const isValid = await comparePasswords(req.body.password, user.password);
+    const isValid = await comparePasswords(req.body.password, user.password);
 
-  if (!isValid) {
-    res.status(401);
-    res.json({ message: "nope" });
+    if (!isValid) {
+      throw new AuthenticationError(errorCodes.INVALID_CREDENTIALS);
+    }
+
+    const token = createJWT(user);
+    res.json({ token });
+  } catch (error) {
+    next(error);
   }
-
-  const token = createJWT(user);
-  res.json({ token });
 };
