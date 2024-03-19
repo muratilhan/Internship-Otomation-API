@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
 import defaultConfig from "../config";
+import { AuthenticationError } from "../errors/AuthenticationError";
+import errorCodes from "../enums/errorCodes";
 
 export const comparePasswords = (password, hash) => {
   return bcrypt.compare(password, hash);
@@ -23,17 +25,13 @@ export const protect = (req, res, next) => {
   const bearer = req.headers.authorization;
 
   if (!bearer) {
-    res.status(401);
-    res.json({ message: "not authorized" });
-    return;
+    throw new AuthenticationError(errorCodes.NOT_AUTHENTICATE);
   }
 
   const [, token] = bearer.split(" ");
 
   if (!token) {
-    res.status(401);
-    res.json({ message: "not valid token" });
-    return;
+    throw new AuthenticationError(errorCodes.NOT_VALID_TOKEN);
   }
 
   try {
@@ -43,6 +41,7 @@ export const protect = (req, res, next) => {
     next();
     return;
   } catch (e) {
+    // ...
     console.error(e);
     res.status(401);
     res.send("Not authorized");

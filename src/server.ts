@@ -3,7 +3,8 @@ import morgan from "morgan";
 import cors from "cors";
 
 import userRouter from "./routes/userRoute";
-import { protect } from "./middlewares/authMiddleware";
+import { protect } from "./middlewares/auth.middleware";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 const app = express();
 
@@ -17,5 +18,7 @@ app.get("/api", protect, (req, res) => {
   // this is a test req
   res.json({ message: "that's it JWT token now active" });
 });
+
+app.use(errorHandler);
 
 export default app;
