@@ -10,12 +10,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_DEV")
+  url      = env("DATABASE_URL_SEFA")
 }
 
 enum USER_TYPE {
-  STUDENT
-  COMISSION
+  STUDENT // öğrenci
+  COMISSION // Komisyon üyesi
+  ADMIN // Yetkili (Admin)
 }
 
 model User {
@@ -29,6 +30,7 @@ model User {
 
   user_type USER_TYPE @default(STUDENT)
 
-  tc_number  String?
-  student_id String?
+  tc_number    String?
+  student_id   String?
+  refreshToken String[]
 }
