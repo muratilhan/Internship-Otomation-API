@@ -1,7 +1,7 @@
 import prisma from "../../db";
 import jwt from "jsonwebtoken";
 
-export const handleRefreshToken = async (req, res, next) => {
+export const refreshToken = async (req, res, next) => {
   const cookies = req.cookies;
   console.log(cookies);
   if (!cookies?.jwt) {

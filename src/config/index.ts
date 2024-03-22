@@ -4,7 +4,7 @@ const env = process.env.NODE_ENV;
 const port = process.env.PORT || 3001;
 
 let defaultConfig = {
-  dbUrl: process.env.DATABASE_URL_DEV,
+  dbUrl: process.env.DATABASE_URL_SEFA,
   jwtSecret: process.env.JWT_SECRET_DEV,
   port: port,
   logging: true,

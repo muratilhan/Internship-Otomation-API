@@ -1,16 +1,11 @@
-import * as bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import prisma from "../../db";
+import {
+  comparePasswords,
+  generateAccesToken,
+  generateRefreshToken,
+} from "../../handlers/auth.handler";
 
-export const comparePasswords = (password, hash) => {
-  return bcrypt.compare(password, hash);
-};
-
-export const hashPassword = (password) => {
-  return bcrypt.hash(password, 10);
-};
-
-export const handleLogin = async (req, res) => {
+export const login = async (req, res) => {
   const cookies = req.cookies;
   const { email, password } = req.body;
   console.log("login cookie", cookies && cookies.jwt);
@@ -20,26 +15,17 @@ export const handleLogin = async (req, res) => {
   });
   if (!foundUser) return res.sendStatus(401); //Unauthorized
   // evaluate password
-  const match = await bcrypt.compare(password, foundUser.password);
+  const match = await comparePasswords(password, foundUser.password);
   if (match) {
     const roles = foundUser.user_type;
     // create JWTs
-    const accessToken = jwt.sign(
-      {
-        UserInfo: {
-          id: foundUser.id,
-          email: foundUser.email,
-          roles: roles,
-        },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "10s" }
+    const accessToken = await generateAccesToken(
+      foundUser.id,
+      foundUser.email,
+      foundUser.user_type
     );
-    const newRefreshToken = jwt.sign(
-      { id: foundUser.id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
+
+    const newRefreshToken = await generateRefreshToken(foundUser.id);
 
     let newRefreshTokenArray = !(cookies && cookies.jwt)
       ? foundUser.refreshToken
@@ -83,7 +69,6 @@ export const handleLogin = async (req, res) => {
     });
 
     console.log(result);
-    console.log(roles);
 
     // Creates Secure Cookie with refresh token
     res.cookie("jwt", newRefreshToken, {

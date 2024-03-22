@@ -1,6 +1,6 @@
 import prisma from "../../db";
 
-export const handleLogout = async (req, res) => {
+export const logout = async (req, res) => {
   // on client also need delete the accessToken
 
   const cookies = req.cookies;
