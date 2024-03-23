@@ -1,9 +1,9 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
-import { hashPassword } from "./auth.controller";
+import { hashPassword } from "../../handlers/auth.handler";
 
-export const handleNewUser = async (req, res, next) => {
+export const newUser = async (req, res, next) => {
   try {
     const isUser = await prisma.user.findUnique({
       where: {

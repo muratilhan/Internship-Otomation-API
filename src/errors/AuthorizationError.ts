@@ -1,7 +1,7 @@
 import { CustomError } from "./CustomError";
 
 export class AuthorizationError extends CustomError {
-  StatusCode = 403;
+  StatusCode = 401;
   constructor(public errorCode: string) {
     super(errorCode);
     Object.setPrototypeOf(this, AuthorizationError.prototype);

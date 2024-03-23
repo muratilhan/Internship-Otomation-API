@@ -30,7 +30,8 @@ model User {
 
   user_type USER_TYPE @default(STUDENT)
 
-  tc_number    String?
-  student_id   String?
-  refreshToken String[]
+  tc_number           String?
+  student_id          String?
+  refreshToken        String[]
+  passwordChangeToken String   @default("")
 }
