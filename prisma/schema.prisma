@@ -19,6 +19,12 @@ enum USER_TYPE {
   ADMIN // Yetkili (Admin)
 }
 
+enum INTERN_STATUS {
+  START
+  DOING
+  END
+}
+
 model User {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
@@ -34,4 +40,93 @@ model User {
   student_id          String?
   refreshToken        String[]
   passwordChangeToken String   @default("")
+
+  follow_up InternForm[] @relation("follow_up")
+  student   InternForm[] @relation("student")
+
+  comission      Interview[]   @relation("comission")
+  intern_student Interview[]   @relation("intern_student")
+  InternStatus   InternStatus?
+}
+
+model InternForm {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  start_date     DateTime
+  end_date       DateTime
+  total_work_day Int
+  edu_year       String // Sonradan bu alan foreign key olabilir
+  edu_program    String   @default("Bilgisayar Mühendisliği")
+  edu_faculty    String   @default("Mühendislik Fakültesi")
+
+  student    User?   @relation("student", fields: [student_id], references: [id])
+  student_id String?
+
+  follow_up    User?   @relation("follow_up", fields: [follow_up_id], references: [id])
+  follow_up_id String?
+
+  student_info    StudentInfo? @relation(fields: [student_info_id], references: [id])
+  student_info_id String?      @unique
+
+  company_info    CompanyInfo?  @relation(fields: [company_info_id], references: [id])
+  company_info_id String?       @unique
+  InternStatus    InternStatus?
+}
+
+model StudentInfo {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  fathers_name String
+  mothers_name String
+
+  birth_place String
+  birth_date  DateTime
+
+  address    String
+  InternForm InternForm?
+}
+
+model CompanyInfo {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  name         String
+  address      String
+  phone        String
+  fax          String
+  email        String
+  service_area String
+  InternForm   InternForm?
+}
+
+model InternStatus {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  user    User?   @relation(fields: [user_id], references: [id])
+  user_id String? @unique
+
+  interview    Interview? @relation(fields: [interview_id], references: [id])
+  interview_id String?    @unique
+
+  form    InternForm? @relation(fields: [form_id], references: [id])
+  form_id String?     @unique
+
+  status INTERN_STATUS @default(START)
+}
+
+model Interview {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  date DateTime
+
+  intern    User?   @relation("intern_student", fields: [intern_id], references: [id])
+  intern_id String?
+
+  comission    User?         @relation("comission", fields: [comission_id], references: [id])
+  comission_id String?
+  InternStatus InternStatus?
 }

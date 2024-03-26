@@ -19,14 +19,14 @@ export const generateAccesToken = async (id, email, roles) => {
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "10s" }
+    { expiresIn: "1d" }
   );
   return accessToken;
 };
 
 export const generateRefreshToken = async (id) => {
   const refreshToken = jwt.sign({ id: id }, process.env.REFRESH_TOKEN_SECRET, {
-    expiresIn: "1d",
+    expiresIn: "2d",
   });
 
   return refreshToken;

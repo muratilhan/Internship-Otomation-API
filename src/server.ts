@@ -7,6 +7,7 @@ import { protect } from "./middlewares/auth.middleware";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { verifyRoles } from "./middlewares/permission.middleware";
 import { ROLES } from "./config/rolesList";
+import internFormRouter from "./routes/internFormRoute";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true })); // query string to js object
 app.use(cookieParser());
 
 app.use("/user", userRouter);
+app.use("/internform", internFormRouter);
 app.get("/api", protect, verifyRoles(ROLES.STUDENT), (req, res) => {
   // this is a test req
   res.json({ message: "that's it JWT token now active" });
