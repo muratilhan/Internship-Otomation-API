@@ -8,7 +8,6 @@ import {
 export const login = async (req, res) => {
   const cookies = req.cookies;
   const { email, password } = req.body;
-  console.log("login cookie", cookies && cookies.jwt);
 
   const foundUser = await prisma.user.findFirst({
     where: { email: email },
@@ -45,7 +44,6 @@ export const login = async (req, res) => {
 
       // Detected refresh token reuse!
       if (!foundToken) {
-        console.log("attempted refresh token reuse at login!");
         // clear out ALL previous refresh tokens
         newRefreshTokenArray = [];
       }
@@ -67,8 +65,6 @@ export const login = async (req, res) => {
         },
       },
     });
-
-    console.log(result);
 
     // Creates Secure Cookie with refresh token
     res.cookie("jwt", newRefreshToken, {

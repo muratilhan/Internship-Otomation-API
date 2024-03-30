@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_SEFA")
+  url      = env("DATABASE_URL_DEV")
 }
 
 enum USER_TYPE {

@@ -14,6 +14,7 @@ export const addNewForm = async (req, res, next) => {
     const comission_user = await prisma.user.findFirst({
       where: { user_type: "ADMIN" },
     });
+    console.log(comission_user);
 
     const newForm = await prisma.internForm.create({
       data: {
@@ -26,7 +27,6 @@ export const addNewForm = async (req, res, next) => {
             id: student_id,
           },
         },
-
         follow_up: {
           connect: {
             id: comission_user.id,
@@ -34,7 +34,6 @@ export const addNewForm = async (req, res, next) => {
         },
       },
     });
-
     res.status(201).json({ message: newForm });
   } catch (e) {
     next(e);
@@ -45,6 +44,45 @@ export const getAllForms = async (req, res, next) => {
   try {
     const allForms = await prisma.internForm.findMany();
     res.status(200).json({ message: allForms });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const getSingleForm = async (req, res, next) => {
+  try {
+    const form_id = req.body.form_id;
+
+    const single_form = await prisma.internForm.findUnique({
+      where: {
+        id: form_id,
+      },
+    });
+    res.status(200).json({ message: single_form });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const deleteSingleForm = async (req, res, next) => {
+  try {
+    const form_id = req.body.form_id;
+
+    await prisma.internForm.delete({
+      where: {
+        id: form_id,
+      },
+    });
+    res.status(200).json({ message: "removed" });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const deleteAllForms = async (req, res, next) => {
+  try {
+    await prisma.internForm.deleteMany();
+    res.status(200).json({ message: "successfully removed" });
   } catch (e) {
     next(e);
   }
