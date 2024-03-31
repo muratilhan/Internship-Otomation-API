@@ -28,8 +28,6 @@ export const logout = async (req, res) => {
     },
   });
 
-  console.log(updatedUser);
-
   // Clear client cookie
   res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
   res.sendStatus(200);

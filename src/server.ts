@@ -2,7 +2,6 @@ import express from "express";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import userRouter from "./routes/userRoute";
 import { protect } from "./middlewares/auth.middleware";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { verifyRoles } from "./middlewares/permission.middleware";
@@ -10,8 +9,8 @@ import { ROLES } from "./config/rolesList";
 import internFormRouter from "./routes/internFormRoute";
 import credentials from "./middlewares/credentials.middleware";
 import corsOptions from "./config/corsOptions";
+
 import authRouter from "./routes/authRoutes";
-import dashboardRouter from "./routes/dashboardRoute";
 import protectedRouter from "./routes/protectedRoutes";
 
 const app = express();
@@ -29,7 +28,6 @@ app.use(cookieParser());
 
 app.use("/auth", authRouter);
 app.use("/api", protect, protectedRouter);
-app.use("/internform", internFormRouter);
 // app.get("/api", protect, verifyRoles(ROLES.STUDENT), (req, res) => {
 //   // this is a test req
 //   res.json({ message: "that's it JWT token now active" });
