@@ -26,8 +26,13 @@ enum INTERN_STATUS {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id String @id @default(uuid())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  createdby String?
+
+  isDeleted Boolean @default(false)
 
   email     String @unique
   password  String
@@ -47,11 +52,36 @@ model User {
   comission      Interview[]   @relation("comission")
   intern_student Interview[]   @relation("intern_student")
   InternStatus   InternStatus?
+
+  internFormCreated InternForm[] @relation("CreatedByRelation")
+  internFormUpdated InternForm[] @relation("UpdatedByRelation")
+
+  InternStatusCreated InternStatus[] @relation("CreatedByRelation")
+  InternStatusUpdated InternStatus[] @relation("UpdatedByRelation")
+
+  InterviewCreated Interview[] @relation("CreatedByRelation")
+  InterviewUpdated Interview[] @relation("UpdatedByRelation")
+
+  SurveyCreated Survey[] @relation("CreatedByRelation")
+  SurveyUpdated Survey[] @relation("UpdatedByRelation")
+
+  ConfidentalReportCreated ConfidentalReport[] @relation("CreatedByRelation")
+  ConfidentalReportUpdated ConfidentalReport[] @relation("UpdatedByRelation")
 }
 
 model InternForm {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+  updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String?
+
+  isDeleted Boolean @default(false)
+  isSealed  Boolean @default(false)
 
   start_date     DateTime
   end_date       DateTime
@@ -75,8 +105,10 @@ model InternForm {
 }
 
 model StudentInfo {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   createdAt DateTime @default(now())
+  isSealed  Boolean  @default(false)
 
   fathers_name String
   mothers_name String
@@ -89,8 +121,10 @@ model StudentInfo {
 }
 
 model CompanyInfo {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   createdAt DateTime @default(now())
+  isSealed  Boolean  @default(false)
 
   name         String
   address      String
@@ -102,8 +136,18 @@ model CompanyInfo {
 }
 
 model InternStatus {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id String @id @default(uuid())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+  updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String?
+
+  isDeleted Boolean @default(false)
+  isSealed  Boolean @default(false)
 
   user    User?   @relation(fields: [user_id], references: [id])
   user_id String? @unique
@@ -118,8 +162,18 @@ model InternStatus {
 }
 
 model Interview {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  id String @id @default(uuid())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+  updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String?
+
+  isDeleted Boolean @default(false)
+  isSealed  Boolean @default(false)
 
   date DateTime
 
@@ -129,4 +183,63 @@ model Interview {
   comission    User?         @relation("comission", fields: [comission_id], references: [id])
   comission_id String?
   InternStatus InternStatus?
+}
+
+model Survey {
+  id String @id @default(uuid())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+  updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String?
+
+  isDeleted Boolean @default(false)
+
+  company_name    String
+  company_address String
+
+  teach_type   String // maybe Enum
+  gano         String // maybe Enum
+  intern_group String // maybe Enum
+  intern_type  String // maybe Enum
+
+  date    DateTime
+  answers Json
+}
+
+model ConfidentalReport {
+  id String @id @default(uuid())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+  updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
+  updatedById String?
+
+  isDeleted    Boolean @default(false)
+  isMailSended Boolean @default(false)
+
+  student_id String
+
+  company_name String
+  address      String
+
+  start_date      DateTime
+  end_date        DateTime
+  days_of_absence Int
+  department      String
+  is_edu_program  Boolean
+
+  intern_evaluation Json
+
+  auth_name      String
+  auth_position  String
+  reg_number     String
+  auth_tc_number String
+  auth_title     String
 }
