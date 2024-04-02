@@ -49,9 +49,9 @@ model User {
   follow_up InternForm[] @relation("follow_up")
   student   InternForm[] @relation("student")
 
-  comission      Interview[]   @relation("comission")
-  intern_student Interview[]   @relation("intern_student")
-  InternStatus   InternStatus?
+  comission      Interview[]    @relation("comission")
+  intern_student Interview[]    @relation("intern_student")
+  InternStatus   InternStatus[] @relation("intern_status_student")
 
   internFormCreated InternForm[] @relation("CreatedByRelation")
   internFormUpdated InternForm[] @relation("UpdatedByRelation")
@@ -149,7 +149,7 @@ model InternStatus {
   isDeleted Boolean @default(false)
   isSealed  Boolean @default(false)
 
-  user    User?   @relation(fields: [user_id], references: [id])
+  user    User?   @relation("intern_status_student", fields: [user_id], references: [id])
   user_id String? @unique
 
   interview    Interview? @relation(fields: [interview_id], references: [id])

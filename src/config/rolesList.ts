@@ -1,5 +1,7 @@
-export const ROLES = {
-  STUDENT: "1001",
-  COMISSION: "3004",
-  ADMIN: "5007",
-};
+enum UserRoles {
+  student = "STUDENT",
+  comission = "COMISSION",
+  admin = "ADMIN",
+}
+
+export default UserRoles;

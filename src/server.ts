@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import { protect } from "./middlewares/auth.middleware";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { verifyRoles } from "./middlewares/permission.middleware";
-import { ROLES } from "./config/rolesList";
 import internFormRouter from "./routes/internFormRoute";
 import credentials from "./middlewares/credentials.middleware";
 import corsOptions from "./config/corsOptions";
