@@ -10,17 +10,18 @@ import { validateRequestSchema } from "../middlewares/validationHandler.middlewa
 import { addUserSchema } from "../validations/user/addUser.schema";
 import { addMultipleUserSchema } from "../validations/user/addMultipleUser.schema";
 
-const userRouter = express.Router();
+const UserRouter = express.Router();
 
-userRouter.get("/get", getUsers);
-userRouter.post("/add", addUserSchema, validateRequestSchema, addUser);
-userRouter.post(
+UserRouter.get("/get", getUsers);
+UserRouter.post("/add", addUserSchema, validateRequestSchema, addUser);
+UserRouter.put("/update/:userId", addUserSchema, validateRequestSchema);
+UserRouter.post(
   "/multipleadd",
   addMultipleUserSchema,
   validateRequestSchema,
   addMultipleUser
 );
-userRouter.get("/get/:userId", getUserById);
-userRouter.delete("/delete/:userId", deleteUserById);
+UserRouter.get("/get/:userId", getUserById);
+UserRouter.delete("/delete/:userId", deleteUserById);
 
-export default userRouter;
+export default UserRouter;

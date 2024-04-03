@@ -68,6 +68,7 @@ export const addUser = async (req, res, next) => {
         user_type: userType,
       },
     });
+
     res.status(200).json({ message: "User created succesfully" });
   } catch (e) {
     next(e);
