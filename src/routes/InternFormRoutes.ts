@@ -1,20 +1,35 @@
 import express from "express";
 import { validateRequestSchema } from "../middlewares/validationHandler.middleware";
 import { protect } from "../middlewares/auth.middleware";
+import {
+  addForm,
+  deleteForm,
+  getFormById,
+  getForms,
+  updateForm,
+} from "../controllers/internFormControllers/internForm.controller";
+import {
+  addStudentInfo,
+  updateStudentInfo,
+} from "../controllers/internFormControllers/studentInfo.controller";
+import {
+  addCompanyInfo,
+  updateCompanyInfo,
+} from "../controllers/internFormControllers/companyInfo.controller";
 
 const InternFormRouter = express.Router();
 
-InternFormRouter.get("/get");
-InternFormRouter.post("/add");
-InternFormRouter.get("/get/:internFormId");
-InternFormRouter.put("/update/:internFormId");
-InternFormRouter.delete("/delete/:internFormId");
+InternFormRouter.get("/get", getForms);
+InternFormRouter.post("/add", addForm);
+InternFormRouter.get("/get/:internFormId", getFormById);
+InternFormRouter.put("/update/:internFormId", updateForm);
+InternFormRouter.delete("/delete/:internFormId", deleteForm);
 
 // Student Info
-InternFormRouter.post("/student-info/add");
-InternFormRouter.put("/student-info/:internFormId");
+InternFormRouter.post("/student-info/add", addStudentInfo);
+InternFormRouter.put("/student-info/:studentInfoId", updateStudentInfo);
 // Company Info
-InternFormRouter.post("/company-info/add");
-InternFormRouter.put("/company-info/:internFormId");
+InternFormRouter.post("/company-info/add", addCompanyInfo);
+InternFormRouter.put("/company-info/:companyInfoId", updateCompanyInfo);
 
 export default InternFormRouter;

@@ -96,10 +96,10 @@ model InternForm {
   follow_up    User?   @relation("follow_up", fields: [follow_up_id], references: [id])
   follow_up_id String?
 
-  student_info    StudentInfo? @relation(fields: [student_info_id], references: [id])
+  student_info    StudentInfo? @relation(fields: [student_info_id], references: [id], onDelete: Cascade)
   student_info_id String?      @unique
 
-  company_info    CompanyInfo?  @relation(fields: [company_info_id], references: [id])
+  company_info    CompanyInfo?  @relation(fields: [company_info_id], references: [id], onDelete: Cascade)
   company_info_id String?       @unique
   InternStatus    InternStatus?
 }
@@ -242,4 +242,9 @@ model ConfidentalReport {
   reg_number     String
   auth_tc_number String
   auth_title     String
+}
+
+model Holidays {
+  id   String   @id @default(uuid())
+  date DateTime
 }

@@ -13,4 +13,8 @@ InternshipPanelRouter.get("/getConfidentalMailList");
 
 InternshipPanelRouter.post("/sendConfidentalMail");
 
+InternshipPanelRouter.post("/addHolidays");
+
+InternshipPanelRouter.delete("/deleteHolidays");
+
 export default InternshipPanelRouter;

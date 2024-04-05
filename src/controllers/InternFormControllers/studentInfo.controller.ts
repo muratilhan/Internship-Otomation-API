@@ -2,14 +2,70 @@ import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 
-export const addNewStudentInfo = async (req, res, next) => {};
+export const addStudentInfo = async (req, res, next) => {
+  try {
+    const {
+      internFormId,
+      fathersName,
+      mothersName,
+      birthDate,
+      birthPlace,
+      address,
+    } = req.body;
 
-export const updateSingleStudentInfo = async (req, res, next) => {};
+    await prisma.studentInfo.create({
+      data: {
+        InternForm: {
+          connect: {
+            id: internFormId,
+          },
+        },
+        fathers_name: fathersName,
+        mothers_name: mothersName,
+        birth_date: birthDate,
+        birth_place: birthPlace,
+        address: address,
+      },
+    });
 
-export const getSingleStudentInfo = async (req, res, next) => {};
+    res.status(200).json({ message: "Student Info added succesfully" });
+  } catch (error) {
+    next(error);
+  }
+};
 
-export const getAllStudentInfos = async (req, res, next) => {};
+export const updateStudentInfo = async (req, res, next) => {
+  try {
+    const studentInfoId = req.params.studentInfoId;
+    const {
+      internFormId,
+      fathersName,
+      mothersName,
+      birthDate,
+      birthPlace,
+      address,
+    } = req.body;
 
-export const deleteSingleStudentInfo = async (req, res, next) => {};
+    await prisma.studentInfo.update({
+      where: {
+        id: studentInfoId,
+      },
+      data: {
+        InternForm: {
+          connect: {
+            id: internFormId,
+          },
+        },
+        fathers_name: fathersName,
+        mothers_name: mothersName,
+        birth_date: birthDate,
+        birth_place: birthPlace,
+        address: address,
+      },
+    });
 
-export const deleteAllStudentInfos = async (req, res, next) => {};
+    res.status(200).json({ message: "Student Info updated succesfully" });
+  } catch (error) {
+    next(error);
+  }
+};
