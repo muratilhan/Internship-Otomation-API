@@ -16,7 +16,7 @@ protectedRouter.use("/profile", ProfileRouter);
 protectedRouter.use("/user", UserRouter);
 
 protectedRouter.use("/intern-status", InternStatusRouter);
-protectedRouter.use("/internform", InternFormRouter);
+protectedRouter.use("/intern-form", InternFormRouter);
 
 protectedRouter.use("/survey", SurveyRouter);
 protectedRouter.use("/confidental", ConfidentalReportRouter);
