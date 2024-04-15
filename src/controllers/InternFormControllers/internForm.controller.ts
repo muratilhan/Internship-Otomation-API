@@ -18,7 +18,7 @@ export const getForms = async (req, res, next) => {
     }
 
     // get filter
-    const { createdBy, studentId, eduYear, startDate, endDate, isSealed } =
+    const { createdBy, schoolNumber, eduYear, startDate, endDate, isSealed } =
       req.query;
 
     const users = await prisma.internForm.findMany({
@@ -47,16 +47,20 @@ export const getForms = async (req, res, next) => {
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
         createdBy: createdBy,
-        student_id: {
-          contains: studentId,
+        // bu studentId o id değil
+        student: {
+          school_number: {
+            contains: schoolNumber,
+          },
         },
         edu_year: eduYear,
-        start_date: {
-          lte: new Date(startDate),
-        },
-        end_date: {
-          gte: new Date(endDate),
-        },
+        // TODO: start_date ve end_date kontrolü
+        // start_date: {
+        //   lte: startDate,
+        // },
+        // end_date: {
+        //   gte: endDate,
+        // },
         isSealed: isSealed,
       },
     });
@@ -72,14 +76,7 @@ export const addForm = async (req, res, next) => {
     // get body
     const userId = req.id;
 
-    const {
-      studentId,
-      startDate,
-      endDate,
-      eduYear,
-      studentInfoId,
-      companyInfoId,
-    } = req.body;
+    const { studentId, startDate, endDate, eduYear } = req.body;
 
     // is there any record with student id already created a record that between the start_date and end_date and not sealed
 
@@ -133,17 +130,6 @@ export const addForm = async (req, res, next) => {
         start_date: new Date(startDate),
         end_date: new Date(endDate),
         edu_year: eduYear,
-
-        student_info: {
-          connect: {
-            id: studentInfoId,
-          },
-        },
-        company_info: {
-          connect: {
-            id: companyInfoId,
-          },
-        },
       },
     });
 
@@ -180,7 +166,7 @@ export const getFormById = async (req, res, next) => {
             id: true,
             name: true,
             last_name: true,
-            student_id: true,
+            school_number: true,
             tc_number: true,
           },
         },

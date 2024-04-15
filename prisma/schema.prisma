@@ -42,7 +42,7 @@ model User {
   user_type USER_TYPE @default(STUDENT)
 
   tc_number           String?
-  student_id          String?
+  school_number       String?
   refreshToken        String[]
   passwordChangeToken String   @default("")
 
@@ -224,7 +224,7 @@ model ConfidentalReport {
   isDeleted    Boolean @default(false)
   isMailSended Boolean @default(false)
 
-  student_id String
+  school_number String
 
   company_name String
   address      String

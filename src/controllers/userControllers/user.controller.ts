@@ -1,3 +1,4 @@
+import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
 import * as bcrypt from "bcrypt";
 
@@ -17,7 +18,7 @@ export const getUsers = async (req, res, next) => {
     }
 
     // get filter
-    const { createdBy, studentId, userType, name } = req.query;
+    const { createdBy, schoolNumber, userType, name } = req.query;
 
     const users = await prisma.user.findMany({
       take: Number(pageSize) || 10,
@@ -29,12 +30,12 @@ export const getUsers = async (req, res, next) => {
         last_name: true,
         user_type: true,
         tc_number: true,
-        student_id: true,
+        school_number: true,
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
-        student_id: {
-          contains: studentId,
+        school_number: {
+          contains: schoolNumber,
         },
         user_type: userType,
         name: {
@@ -53,13 +54,13 @@ export const getUsers = async (req, res, next) => {
 export const addUser = async (req, res, next) => {
   try {
     const adminId = req.id;
-    const { studentId, email, name, lastName, userType } = req.body;
+    const { schoolNumber, email, name, lastName, userType } = req.body;
 
     const randomString = Math.random().toString(36).substring(2);
 
     const newUser = await prisma.user.create({
       data: {
-        student_id: studentId,
+        school_number: schoolNumber,
         email: email,
         name: name,
         last_name: lastName,
@@ -84,7 +85,7 @@ export const addMultipleUser = async (req, res, next) => {
 
     const userDataPromises = userList.map(async (user) => {
       return {
-        student_id: user.studentId,
+        school_number: user.schoolNumber,
         email: user.email,
         name: user.name,
         last_name: user.lastName,
@@ -135,5 +136,23 @@ export const deleteUserById = async (req, res, next) => {
     res.status(200).json({ message: "User deleted" });
   } catch (e) {
     next(e);
+  }
+};
+
+export const getStudentAC = async (req, res, next) => {
+  try {
+    const students = await prisma.user.findMany({
+      where: { user_type: UserRoles.student },
+      select: {
+        name: true,
+        last_name: true,
+        id: true,
+        school_number: true,
+      },
+    });
+
+    res.status(200).json({ data: students || [] });
+  } catch (error) {
+    next(error);
   }
 };

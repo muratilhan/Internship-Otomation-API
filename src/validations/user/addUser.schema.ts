@@ -2,7 +2,7 @@ import { body } from "express-validator";
 import UserRoles from "../../config/rolesList";
 
 const schema = [
-  body("studentId").exists().isString(),
+  body("schoolNumber").exists().isString(),
   body("email").exists().isEmail(),
   body("name").exists().isString(),
   body("lastName").exists().isString(),

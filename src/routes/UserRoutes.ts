@@ -3,6 +3,7 @@ import {
   addMultipleUser,
   addUser,
   deleteUserById,
+  getStudentAC,
   getUserById,
   getUsers,
 } from "../controllers/userControllers/user.controller";
@@ -23,5 +24,8 @@ UserRouter.post(
 );
 UserRouter.get("/get/:userId", getUserById);
 UserRouter.delete("/delete/:userId", deleteUserById);
+
+// AC
+UserRouter.get("/autocomplete/student", getStudentAC);
 
 export default UserRouter;

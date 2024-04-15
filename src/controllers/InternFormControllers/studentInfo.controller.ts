@@ -22,7 +22,7 @@ export const addStudentInfo = async (req, res, next) => {
         },
         fathers_name: fathersName,
         mothers_name: mothersName,
-        birth_date: birthDate,
+        birth_date: new Date(birthDate),
         birth_place: birthPlace,
         address: address,
       },

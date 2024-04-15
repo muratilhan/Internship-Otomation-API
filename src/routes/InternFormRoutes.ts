@@ -27,9 +27,9 @@ InternFormRouter.delete("/delete/:internFormId", deleteForm);
 
 // Student Info
 InternFormRouter.post("/student-info/add", addStudentInfo);
-InternFormRouter.put("/student-info/:studentInfoId", updateStudentInfo);
+InternFormRouter.put("/student-info/update/:studentInfoId", updateStudentInfo);
 // Company Info
 InternFormRouter.post("/company-info/add", addCompanyInfo);
-InternFormRouter.put("/company-info/:companyInfoId", updateCompanyInfo);
+InternFormRouter.put("/company-info/update/:companyInfoId", updateCompanyInfo);
 
 export default InternFormRouter;
