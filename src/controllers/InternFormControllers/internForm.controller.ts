@@ -80,7 +80,7 @@ export const addForm = async (req, res, next) => {
 
     // is there any record with student id already created a record that between the start_date and end_date and not sealed
 
-    const isDuplicateForm = prisma.internForm.findFirst({
+    const isDuplicateForm = await prisma.internForm.findFirst({
       where: {
         isDeleted: false,
         student_id: studentId,
@@ -89,7 +89,7 @@ export const addForm = async (req, res, next) => {
     });
 
     if (isDuplicateForm) {
-      res
+      return res
         .status(400)
         .json({ message: "you cannot create another internship form" });
     }
@@ -99,8 +99,10 @@ export const addForm = async (req, res, next) => {
 
     const totalWorkDay = calculateBussinesDates(startDate, endDate, holidays);
 
+    console.log(totalWorkDay);
+
     if (totalWorkDay > 60 || totalWorkDay < 1) {
-      res.status(400).json({ message: "totalwork day is not " });
+      return res.status(400).json({ message: "totalwork day is not " });
     }
 
     const adminUser = await prisma.user.findFirst({
@@ -133,7 +135,9 @@ export const addForm = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "form created succesfully" });
+    res
+      .status(200)
+      .json({ data: newForm.id, message: "form created succesfully" });
   } catch (error) {
     next(error);
   }
@@ -150,6 +154,7 @@ export const getFormById = async (req, res, next) => {
         id: internFormId,
       },
       select: {
+        id: true,
         createdAt: true,
         createdBy: selectUserTag,
         updatedAt: true,
@@ -160,6 +165,7 @@ export const getFormById = async (req, res, next) => {
         total_work_day: true,
         edu_faculty: true,
         edu_program: true,
+        edu_year: true,
 
         student: {
           select: {
@@ -212,14 +218,7 @@ export const updateForm = async (req, res, next) => {
 
     const internFormId = req.params.internFormId;
 
-    const {
-      studentId,
-      startDate,
-      endDate,
-      eduYear,
-      studentInfoId,
-      companyInfoId,
-    } = req.body;
+    const { studentId, startDate, endDate, eduYear } = req.body;
 
     // TODO: calculate the totalWorkDay
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
@@ -241,7 +240,7 @@ export const updateForm = async (req, res, next) => {
         id: internFormId,
       },
       data: {
-        createdBy: {
+        updatedBy: {
           connect: {
             id: userId,
           },
@@ -260,17 +259,6 @@ export const updateForm = async (req, res, next) => {
         start_date: new Date(startDate),
         end_date: new Date(endDate),
         edu_year: eduYear,
-
-        student_info: {
-          connect: {
-            id: studentInfoId,
-          },
-        },
-        company_info: {
-          connect: {
-            id: companyInfoId,
-          },
-        },
       },
     });
 

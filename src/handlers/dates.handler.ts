@@ -14,7 +14,8 @@ export const calculateBussinesDates = (startDate, endDate, holidays) => {
   let count = 0;
 
   const currentDate = new Date(startDate);
-  while (currentDate <= endDate) {
+  const finalDate = new Date(endDate);
+  while (currentDate <= finalDate) {
     if (!isWeekend(currentDate) && !isHoliday(currentDate, holidays)) {
       count++;
     }
