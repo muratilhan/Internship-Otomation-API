@@ -6,6 +6,7 @@ import {
   deleteForm,
   getFormById,
   getForms,
+  getInternFormAC,
   updateForm,
 } from "../controllers/internFormControllers/internForm.controller";
 import {
@@ -31,5 +32,8 @@ InternFormRouter.put("/student-info/update/:studentInfoId", updateStudentInfo);
 // Company Info
 InternFormRouter.post("/company-info/add", addCompanyInfo);
 InternFormRouter.put("/company-info/update/:companyInfoId", updateCompanyInfo);
+
+// AC
+InternFormRouter.get("/autocomplete", getInternFormAC);
 
 export default InternFormRouter;

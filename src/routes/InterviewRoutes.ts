@@ -12,4 +12,7 @@ InterviewRouter.put("/update/:interviewId");
 
 InterviewRouter.delete("/delete/:interviewId");
 
+// AC
+InterviewRouter.get("/autocomplete");
+
 export default InterviewRouter;

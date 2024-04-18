@@ -135,6 +135,27 @@ export const addForm = async (req, res, next) => {
       },
     });
 
+    // InternStatus
+    const newInternStatus = await prisma.internStatus.create({
+      data: {
+        createdBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        user: {
+          connect: {
+            id: studentId,
+          },
+        },
+        form: {
+          connect: {
+            id: newForm.id,
+          },
+        },
+      },
+    });
+
     res
       .status(200)
       .json({ data: newForm.id, message: "form created succesfully" });
@@ -276,5 +297,31 @@ export const deleteForm = async (req, res, next) => {
     res.status(200).json({ message: "Form deleted succesfully" });
   } catch (e) {
     next(e);
+  }
+};
+
+export const getInternFormAC = async (req, res, next) => {
+  try {
+    const selectStudentTag = {
+      select: { id: true, name: true, last_name: true, school_number: true },
+    };
+    const internForms = await prisma.internForm.findMany({
+      select: {
+        id: true,
+        student: selectStudentTag,
+        start_date: true,
+        end_date: true,
+        company_info: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ data: internForms || [] });
+  } catch (error) {
+    next(error);
   }
 };
