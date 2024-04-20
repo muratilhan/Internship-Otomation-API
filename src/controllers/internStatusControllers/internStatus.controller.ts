@@ -160,3 +160,10 @@ export const deleteInternStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateOnlyStatus = async (req, res, next) => {
+  try {
+  } catch (error) {
+    next(error);
+  }
+};
