@@ -1,16 +1,25 @@
 import express from "express";
+import {
+  addNewSurvey,
+  deleteSurvey,
+  deleteSurveys,
+  getAllSurveys,
+  getSingleSurvey,
+  updateSurvey,
+} from "../controllers/internFormControllers/survey.controller";
 
 const SurveyRouter = express.Router();
 
-SurveyRouter.get("/get");
+SurveyRouter.get("/get", getAllSurveys);
 
-SurveyRouter.get("/get/:surveyId");
+SurveyRouter.get("/get/:surveyId", getSingleSurvey);
 
-SurveyRouter.put("/update/:surveyId");
+SurveyRouter.put("/update/:surveyId", updateSurvey);
 
-SurveyRouter.delete("/delete/:surveyId");
+SurveyRouter.delete("/delete/:surveyId", deleteSurvey);
+SurveyRouter.delete("/delete/", deleteSurveys);
 
 // Intern Status
-SurveyRouter.post("/add");
+SurveyRouter.post("/add", addNewSurvey);
 
 export default SurveyRouter;
