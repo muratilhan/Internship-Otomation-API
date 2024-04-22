@@ -18,9 +18,9 @@ authRouter.post("/signin", signinSchema, validateRequestSchema, login);
 
 authRouter.post("/signup", newUser);
 
-authRouter.post("/token", refreshToken);
+authRouter.post("/refresh", refreshToken);
 
-authRouter.post("/logout", logout);
+authRouter.get("/logout", logout);
 
 authRouter.post(
   "/password-reset",

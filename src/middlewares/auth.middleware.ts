@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import defaultConfig from "../config";
-import { AuthenticationError } from "../errors/AuthenticationError";
 import errorCodes from "../enums/errorCodes";
+import { AuthenticationError } from "../errors/AuthenticationError";
 
 export const createJWT = (user) => {
   const token = jwt.sign(
@@ -13,23 +13,29 @@ export const createJWT = (user) => {
 };
 
 export const protect = (req, res, next) => {
-  const bearer = req.headers.authorization || req.headers.Authorization;
+  try {
+    const bearer = req.headers.authorization || req.headers.Authorization;
 
-  if (!bearer) {
-    throw new AuthenticationError(errorCodes.NOT_AUTHENTICATE);
+    if (!bearer) {
+      throw new AuthenticationError(errorCodes.NOT_AUTHENTICATE);
+    }
+
+    const [, token] = bearer.split(" ");
+
+    if (!token) {
+      throw new AuthenticationError(errorCodes.NOT_VALID_TOKEN);
+    }
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        throw new AuthenticationError(errorCodes.NOT_VALID_TOKEN);
+      }
+      req.id = decoded.UserInfo.id;
+      req.email = decoded.UserInfo.email;
+      req.roles = decoded.UserInfo.roles;
+      next();
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const [, token] = bearer.split(" ");
-
-  if (!token) {
-    throw new AuthenticationError(errorCodes.NOT_VALID_TOKEN);
-  }
-
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if (err) return res.sendStatus(403); //invalid token
-    req.id = decoded.UserInfo.id;
-    req.email = decoded.UserInfo.email;
-    req.roles = decoded.UserInfo.roles;
-    next();
-  });
 };
