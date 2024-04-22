@@ -149,8 +149,8 @@ model InternStatus {
   isDeleted Boolean @default(false)
   isSealed  Boolean @default(false)
 
-  user    User?   @relation("intern_status_student", fields: [user_id], references: [id])
-  user_id String? @unique
+  student    User?   @relation("intern_status_student", fields: [student_id], references: [id])
+  student_id String? @unique
 
   interview    Interview? @relation(fields: [interview_id], references: [id])
   interview_id String?    @unique

@@ -29,7 +29,7 @@ export const getInternStatuses = async (req, res, next) => {
             },
           },
         },
-        user: {
+        student: {
           select: {
             id: true,
             name: true,
@@ -69,7 +69,7 @@ export const getInternStatusById = async (req, res, next) => {
         interview_id: true,
         form_id: true,
 
-        user: {
+        student: {
           select: {
             id: true,
             name: true,
@@ -135,7 +135,7 @@ export const updateInternStatus = async (req, res, next) => {
             id: formId,
           },
         },
-        user: {
+        student: {
           connect: {
             id: studentId,
           },
