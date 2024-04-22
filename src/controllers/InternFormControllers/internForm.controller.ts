@@ -143,7 +143,7 @@ export const addForm = async (req, res, next) => {
             id: userId,
           },
         },
-        user: {
+        student: {
           connect: {
             id: studentId,
           },
