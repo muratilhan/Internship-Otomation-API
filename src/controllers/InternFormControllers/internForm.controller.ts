@@ -1,89 +1,327 @@
+import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
-import errorCodes from "../../enums/errorCodes";
-import { BadRequestError } from "../../errors/BadRequestError";
+import { calculateBussinesDates } from "../../handlers/dates.handler";
 
-export const addNewForm = async (req, res, next) => {
+export const getForms = async (req, res, next) => {
   try {
-    const { start_date, end_date, edu_year } = req.body;
+    // get pagination
+    const { pageSize, page } = req.query;
 
-    const student_id = req.id;
+    // get sort
+    let { sortedBy, sortedWay } = req.query;
 
-    const date1 = new Date(start_date);
-    const date2 = new Date(end_date);
+    if (!sortedBy) {
+      sortedBy = "createdAt";
+    }
+    if (!sortedWay) {
+      sortedWay = "asc";
+    }
 
-    const comission_user = await prisma.user.findFirst({
-      where: { user_type: "ADMIN" },
+    // get filter
+    const { createdBy, schoolNumber, eduYear, startDate, endDate, isSealed } =
+      req.query;
+
+    const users = await prisma.internForm.findMany({
+      take: Number(pageSize) || 10,
+      skip: Number(page) * Number(pageSize) || undefined,
+      select: {
+        id: true,
+        createdAt: true,
+        start_date: true,
+        end_date: true,
+        edu_year: true,
+        total_work_day: true,
+        student: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        follow_up: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ [sortedBy]: sortedWay }],
+      where: {
+        createdBy: createdBy,
+        // bu studentId o id değil
+        student: {
+          school_number: {
+            contains: schoolNumber,
+          },
+        },
+        edu_year: eduYear,
+        // TODO: start_date ve end_date kontrolü
+        // start_date: {
+        //   lte: startDate,
+        // },
+        // end_date: {
+        //   gte: endDate,
+        // },
+        isSealed: isSealed,
+      },
     });
-    console.log(comission_user);
+
+    res.status(200).json({ data: users, dataLength: users.length });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const addForm = async (req, res, next) => {
+  try {
+    // get body
+    const userId = req.id;
+
+    const { studentId, startDate, endDate, eduYear } = req.body;
+
+    // is there any record with student id already created a record that between the start_date and end_date and not sealed
+
+    const isDuplicateForm = await prisma.internForm.findFirst({
+      where: {
+        isDeleted: false,
+        student_id: studentId,
+        isSealed: false,
+      },
+    });
+
+    if (isDuplicateForm) {
+      return res
+        .status(400)
+        .json({ message: "you cannot create another internship form" });
+    }
+
+    // TODO: calculate the totalWorkDay
+    const holidays = await prisma.holidays.findMany({ select: { date: true } });
+
+    const totalWorkDay = calculateBussinesDates(startDate, endDate, holidays);
+
+    console.log(totalWorkDay);
+
+    if (totalWorkDay > 60 || totalWorkDay < 1) {
+      return res.status(400).json({ message: "totalwork day is not " });
+    }
+
+    const adminUser = await prisma.user.findFirst({
+      where: {
+        user_type: UserRoles.admin,
+      },
+    });
 
     const newForm = await prisma.internForm.create({
       data: {
-        start_date: date1,
-        end_date: date2,
-        edu_year: edu_year,
-        total_work_day: 40,
-        student: {
+        createdBy: {
           connect: {
-            id: student_id,
+            id: userId,
           },
         },
         follow_up: {
           connect: {
-            id: comission_user.id,
+            id: adminUser.id,
+          },
+        },
+        student: {
+          connect: {
+            id: studentId,
+          },
+        },
+        total_work_day: totalWorkDay,
+        start_date: new Date(startDate),
+        end_date: new Date(endDate),
+        edu_year: eduYear,
+      },
+    });
+
+    // InternStatus
+    const newInternStatus = await prisma.internStatus.create({
+      data: {
+        createdBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        user: {
+          connect: {
+            id: studentId,
+          },
+        },
+        form: {
+          connect: {
+            id: newForm.id,
           },
         },
       },
     });
-    res.status(201).json({ message: newForm });
-  } catch (e) {
-    next(e);
+
+    res
+      .status(200)
+      .json({ data: newForm.id, message: "form created succesfully" });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getAllForms = async (req, res, next) => {
+export const getFormById = async (req, res, next) => {
   try {
-    const allForms = await prisma.internForm.findMany();
-    res.status(200).json({ message: allForms });
-  } catch (e) {
-    next(e);
-  }
-};
+    const internFormId = req.params.internFormId;
 
-export const getSingleForm = async (req, res, next) => {
-  try {
-    const form_id = req.body.form_id;
+    const selectUserTag = { select: { id: true, name: true, last_name: true } };
 
-    const single_form = await prisma.internForm.findUnique({
+    const internForm = await prisma.internForm.findUnique({
       where: {
-        id: form_id,
+        id: internFormId,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        createdBy: selectUserTag,
+        updatedAt: true,
+        updatedBy: selectUserTag,
+
+        start_date: true,
+        end_date: true,
+        total_work_day: true,
+        edu_faculty: true,
+        edu_program: true,
+        edu_year: true,
+
+        student: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+            school_number: true,
+            tc_number: true,
+          },
+        },
+
+        follow_up: selectUserTag,
+
+        student_info: {
+          select: {
+            id: true,
+            fathers_name: true,
+            mothers_name: true,
+            birth_date: true,
+            birth_place: true,
+            address: true,
+          },
+        },
+
+        company_info: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+            fax: true,
+            email: true,
+            service_area: true,
+          },
+        },
       },
     });
-    res.status(200).json({ message: single_form });
+
+    res.status(200).json({ data: internForm });
   } catch (e) {
     next(e);
   }
 };
 
-export const deleteSingleForm = async (req, res, next) => {
+export const updateForm = async (req, res, next) => {
+  // get body
+  // if person was student and the record is sealed he / she cannot update the record --> this should be handled in prisma.use middleware
   try {
-    const form_id = req.body.form_id;
+    const userId = req.id;
 
-    await prisma.internForm.delete({
+    const internFormId = req.params.internFormId;
+
+    const { studentId, startDate, endDate, eduYear } = req.body;
+
+    // TODO: calculate the totalWorkDay
+    const holidays = await prisma.holidays.findMany({ select: { date: true } });
+
+    const totalWorkDay = calculateBussinesDates(startDate, endDate, holidays);
+
+    if (totalWorkDay > 60 || totalWorkDay < 1) {
+      res.status(400).json({ message: "totalwork day is not " });
+    }
+
+    const adminUser = await prisma.user.findFirst({
       where: {
-        id: form_id,
+        user_type: UserRoles.admin,
       },
     });
-    res.status(200).json({ message: "removed" });
+
+    const updatedForm = await prisma.internForm.update({
+      where: {
+        id: internFormId,
+      },
+      data: {
+        updatedBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        follow_up: {
+          connect: {
+            id: adminUser.id,
+          },
+        },
+        student: {
+          connect: {
+            id: studentId,
+          },
+        },
+        total_work_day: totalWorkDay,
+        start_date: new Date(startDate),
+        end_date: new Date(endDate),
+        edu_year: eduYear,
+      },
+    });
+
+    res.status(200).json({ message: "form updated succesfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteForm = async (req, res, next) => {
+  try {
+    const internFormId = req.params.internFormId;
+
+    await prisma.internForm.delete({ where: { id: internFormId } });
+    res.status(200).json({ message: "Form deleted succesfully" });
   } catch (e) {
     next(e);
   }
 };
 
-export const deleteAllForms = async (req, res, next) => {
+export const getInternFormAC = async (req, res, next) => {
   try {
-    await prisma.internForm.deleteMany();
-    res.status(200).json({ message: "successfully removed" });
-  } catch (e) {
-    next(e);
+    const selectStudentTag = {
+      select: { id: true, name: true, last_name: true, school_number: true },
+    };
+    const internForms = await prisma.internForm.findMany({
+      select: {
+        id: true,
+        student: selectStudentTag,
+        start_date: true,
+        end_date: true,
+        company_info: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ data: internForms || [] });
+  } catch (error) {
+    next(error);
   }
 };

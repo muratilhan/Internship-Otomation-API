@@ -25,12 +25,12 @@ export const getMyProfile = async (req, res, next) => {
   };
   userDto.name = userInfo.name;
   userDto.lastName = userInfo.last_name;
-  userDto.studentId = userInfo.student_id;
+  userDto.studentId = userInfo.school_number;
   userDto.tcNumber = userInfo.tc_number;
   userDto.email = userInfo.email;
   userDto.avatarImg = ""; // not for now
 
-  return res.json({ userDto });
+  return res.json(userDto);
 };
 
 export const updateMyProfile = async (req, res, next) => {

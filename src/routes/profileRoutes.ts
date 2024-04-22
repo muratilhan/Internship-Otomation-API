@@ -7,14 +7,14 @@ import {
 } from "../controllers/profileControllers/profile.controller";
 import { updateProfileSchema } from "../validations/profile/updateProfile.schema";
 
-const profileRouter = express.Router();
+const ProfileRouter = express.Router();
 
-profileRouter.get("/myprofile", getMyProfile);
-profileRouter.put(
+ProfileRouter.get("/myprofile", getMyProfile);
+ProfileRouter.put(
   "/update",
   updateProfileSchema,
   validateRequestSchema,
   updateMyProfile
 );
 
-export default profileRouter;
+export default ProfileRouter;
