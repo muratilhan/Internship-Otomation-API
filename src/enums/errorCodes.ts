@@ -7,7 +7,9 @@ const errorCodes = {
   // Auth
 
   NOT_AUTHENTICATE: "AUTH001",
-  NOT_VALID_TOKEN: "AUTH002",
+  NOT_TOKEN: "AUTH002",
+  NOT_VALID_TOKEN: "AUTH003",
+  NOT_VALID_REFRESH_TOKEN: "AUTH004",
 };
 
 export default errorCodes;

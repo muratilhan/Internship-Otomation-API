@@ -2,7 +2,7 @@ import express from "express";
 
 import InternFormRouter from "./InternFormRoutes";
 import DashboardRouter from "./DashboardRoutes";
-import ProfileRouter from "./ProfileRoutes";
+import ProfileRouter from "./profileRoutes";
 import UserRouter from "./UserRoutes";
 import SurveyRouter from "./SurveyRoutes";
 import ConfidentalReportRouter from "./ConfidentalReportRoutes";
