@@ -76,7 +76,7 @@ export const addForm = async (req, res, next) => {
     // get body
     const userId = req.id;
 
-    const { studentId, startDate, endDate, eduYear } = req.body;
+    const { studentId, startDate, endDate, eduYearId } = req.body;
 
     // is there any record with student id already created a record that between the start_date and end_date and not sealed
 
@@ -131,7 +131,11 @@ export const addForm = async (req, res, next) => {
         total_work_day: totalWorkDay,
         start_date: new Date(startDate),
         end_date: new Date(endDate),
-        edu_year: eduYear,
+        edu_year: {
+          connect: {
+            id: eduYearId,
+          },
+        },
       },
     });
 
@@ -239,7 +243,7 @@ export const updateForm = async (req, res, next) => {
 
     const internFormId = req.params.internFormId;
 
-    const { studentId, startDate, endDate, eduYear } = req.body;
+    const { studentId, startDate, endDate, eduYearId } = req.body;
 
     // TODO: calculate the totalWorkDay
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
@@ -279,7 +283,11 @@ export const updateForm = async (req, res, next) => {
         total_work_day: totalWorkDay,
         start_date: new Date(startDate),
         end_date: new Date(endDate),
-        edu_year: eduYear,
+        edu_year: {
+          connect: {
+            id: eduYearId,
+          },
+        },
       },
     });
 

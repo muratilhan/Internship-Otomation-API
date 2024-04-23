@@ -86,9 +86,12 @@ model InternForm {
   start_date     DateTime
   end_date       DateTime
   total_work_day Int
-  edu_year       String // Sonradan bu alan foreign key olabilir
-  edu_program    String   @default("Bilgisayar Mühendisliği")
-  edu_faculty    String   @default("Mühendislik Fakültesi")
+
+  edu_year    EduYear @relation("edu_year", fields: [edu_year_id], references: [id])
+  edu_year_id Int
+
+  edu_program String @default("Bilgisayar Mühendisliği")
+  edu_faculty String @default("Mühendislik Fakültesi")
 
   student    User?   @relation("student", fields: [student_id], references: [id])
   student_id String?
@@ -247,4 +250,10 @@ model ConfidentalReport {
 model Holidays {
   id   String   @id @default(uuid())
   date DateTime
+}
+
+model EduYear {
+  id         Int          @id @default(autoincrement())
+  name       String
+  internForm InternForm[] @relation("edu_year")
 }

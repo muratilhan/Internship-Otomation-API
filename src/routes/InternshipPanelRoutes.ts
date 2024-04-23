@@ -1,5 +1,11 @@
 import express from "express";
 import { getHolidays } from "../controllers/internshipPanelControllers/holiday.controller";
+import {
+  addEduYear,
+  deleteEduYear,
+  getEduYears,
+  getEduYearsAC,
+} from "../controllers/internshipPanelControllers/eduyear.controller";
 
 const InternshipPanelRouter = express.Router();
 
@@ -14,10 +20,20 @@ InternshipPanelRouter.get("/getConfidentalMailList");
 
 InternshipPanelRouter.post("/sendConfidentalMail");
 
-InternshipPanelRouter.post("/addHolidays");
+// Holiday
+InternshipPanelRouter.post("/holiday/add");
 
-InternshipPanelRouter.delete("/deleteHolidays");
+InternshipPanelRouter.delete("/holiday/delete/:holidayId");
 
-InternshipPanelRouter.get("/getHolidays", getHolidays);
+InternshipPanelRouter.get("/holiday/get", getHolidays);
+
+// EduYear
+InternshipPanelRouter.post("/eduyear/add", addEduYear);
+
+InternshipPanelRouter.delete("/eduyear/delete/:eduYearId", deleteEduYear);
+
+InternshipPanelRouter.get("/eduyear/get", getEduYears);
+
+InternshipPanelRouter.get("/eduyear/autocomplete", getEduYearsAC);
 
 export default InternshipPanelRouter;
