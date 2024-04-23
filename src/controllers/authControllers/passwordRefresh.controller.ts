@@ -24,7 +24,7 @@ export const sendPasswordRefresh = async (req, res, next) => {
       data: { passwordChangeToken: passwordRefreshToken },
     });
 
-    const link = `${process.env.BASE_URL}/password-reset/${passwordRefreshToken}`;
+    const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
     await sendEmail(user.email, "Password reset", link);
 
     res.send("password reset link sent to your email account");
