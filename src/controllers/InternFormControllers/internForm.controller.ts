@@ -18,8 +18,16 @@ export const getForms = async (req, res, next) => {
     }
 
     // get filter
-    const { createdBy, schoolNumber, eduYear, startDate, endDate, isSealed } =
-      req.query;
+    const {
+      createdBy,
+      schoolNumber,
+      eduYearId,
+      startDate,
+      endDate,
+      isSealed,
+      studentId,
+      name,
+    } = req.query;
 
     const users = await prisma.internForm.findMany({
       take: Number(pageSize) || 10,
@@ -35,33 +43,31 @@ export const getForms = async (req, res, next) => {
           select: {
             id: true,
             name: true,
+            last_name: true,
           },
         },
         follow_up: {
           select: {
             id: true,
             name: true,
+            last_name: true,
           },
         },
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
         createdBy: createdBy,
-        // bu studentId o id değil
-        student: {
-          school_number: {
-            contains: schoolNumber,
-          },
-        },
-        edu_year: eduYear,
-        // TODO: start_date ve end_date kontrolü
-        // start_date: {
-        //   lte: startDate,
-        // },
-        // end_date: {
-        //   gte: endDate,
-        // },
-        isSealed: isSealed,
+        AND: [
+          studentId ? { student: { id: { contains: studentId } } } : {},
+          name ? { student: { name: { contains: schoolNumber } } } : {},
+          schoolNumber
+            ? { student: { school_number: { contains: schoolNumber } } }
+            : {},
+          eduYearId ? { edu_year: { id: { equals: eduYearId * 1 } } } : {},
+          startDate ? { start_date: { gte: new Date(startDate) } } : {},
+          endDate ? { end_date: { lte: new Date(endDate) } } : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+        ],
       },
     });
 
@@ -328,7 +334,13 @@ export const getInternFormAC = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: internForms || [] });
+    const modifiedInternForms = internForms.map((internForm) => ({
+      id: internForm.id,
+      label: `${internForm.student.name} ${internForm.student.last_name}`,
+      subtext: `${internForm.start_date}\n${internForm.end_date}\n${internForm.company_info.name}`,
+    }));
+
+    res.status(200).json({ data: modifiedInternForms || [] });
   } catch (error) {
     next(error);
   }

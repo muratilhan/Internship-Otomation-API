@@ -5,7 +5,7 @@ import {
   getAllConfidentalReports,
   getSingleConfidentalReport,
   updateConfidentalReport,
-} from "../controllers/internFormControllers/confidentalReport.controller";
+} from "../controllers/confidentalReportControllers/confidentalReport.controller";
 
 const ConfidentalReportRouter = express.Router();
 

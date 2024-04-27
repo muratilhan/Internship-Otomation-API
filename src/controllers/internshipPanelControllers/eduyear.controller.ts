@@ -55,7 +55,13 @@ export const getEduYearsAC = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: eduYears });
+    const modifiedEduYears = eduYears.map((eduYear) => ({
+      id: eduYear.id,
+      label: eduYear.name,
+      subtext: "",
+    }));
+
+    res.status(200).json({ data: modifiedEduYears });
   } catch (error) {
     next(error);
   }

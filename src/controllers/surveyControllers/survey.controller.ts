@@ -42,6 +42,22 @@ export const addNewSurvey = async (req, res, next) => {
 
 export const getAllSurveys = async (req, res, next) => {
   try {
+    // get pagination
+    const { pageSize, page } = req.query;
+
+    // get sort
+    let { sortedBy, sortedWay } = req.query;
+
+    if (!sortedBy) {
+      sortedBy = "createdAt";
+    }
+    if (!sortedWay) {
+      sortedWay = "asc";
+    }
+
+    // get filter
+    const { eduYearId, studentId, comissionId, status } = req.query;
+
     const surveys = await prisma.survey.findMany();
 
     res.status(200).json({ data: surveys, dataLenth: surveys.length });
@@ -112,7 +128,6 @@ export const getSingleSurvey = async (req, res, next) => {
   try {
     const surveyId = req.params.surveyId;
     const selectUserTag = { select: { id: true, name: true, last_name: true } };
-    console.log("+++");
     const survey = await prisma.survey.findUnique({
       where: { id: surveyId },
       select: {

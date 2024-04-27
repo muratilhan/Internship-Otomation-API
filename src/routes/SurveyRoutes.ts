@@ -6,7 +6,7 @@ import {
   getAllSurveys,
   getSingleSurvey,
   updateSurvey,
-} from "../controllers/internFormControllers/survey.controller";
+} from "../controllers/surveyControllers/survey.controller";
 
 const SurveyRouter = express.Router();
 

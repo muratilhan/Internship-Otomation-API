@@ -2,7 +2,25 @@ import prisma from "../../db";
 
 export const getInternStatuses = async (req, res, next) => {
   try {
+    // get pagination
+    const { pageSize, page } = req.query;
+
+    // get sort
+    let { sortedBy, sortedWay } = req.query;
+
+    if (!sortedBy) {
+      sortedBy = "createdAt";
+    }
+    if (!sortedWay) {
+      sortedWay = "asc";
+    }
+
+    // get filter
+    const { eduYearId, studentId, comissionId, status } = req.query;
+
     const internStatuses = await prisma.internStatus.findMany({
+      take: Number(pageSize) || 10,
+      skip: Number(page) * Number(pageSize) || undefined,
       select: {
         id: true,
         status: true,
@@ -38,6 +56,43 @@ export const getInternStatuses = async (req, res, next) => {
             tc_number: true,
           },
         },
+      },
+      orderBy: [{ [sortedBy]: sortedWay }],
+      where: {
+        AND: [
+          studentId
+            ? {
+                student: {
+                  id: {
+                    contains: studentId,
+                  },
+                },
+              }
+            : {},
+          eduYearId
+            ? {
+                form: {
+                  edu_year: {
+                    id: {
+                      equals: eduYearId * 1 || undefined,
+                    },
+                  },
+                },
+              }
+            : {},
+          comissionId
+            ? {
+                interview: {
+                  comission: {
+                    id: {
+                      contains: comissionId,
+                    },
+                  },
+                },
+              }
+            : {},
+          status ? { status: status } : {},
+        ],
       },
     });
 
