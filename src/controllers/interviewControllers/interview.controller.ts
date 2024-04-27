@@ -2,8 +2,27 @@ import prisma from "../../db";
 
 export const getInterviews = async (req, res, next) => {
   try {
+    // get pagination
+    const { pageSize, page } = req.query;
+
+    // get sort
+    let { sortedBy, sortedWay } = req.query;
+
+    if (!sortedBy) {
+      sortedBy = "createdAt";
+    }
+    if (!sortedWay) {
+      sortedWay = "asc";
+    }
+
+    // get filter
+    const { createdBy, eduYearId, date, status, comissionId, studentId } =
+      req.query;
+
     const selectUserTag = { select: { id: true, name: true, last_name: true } };
     const interviews = await prisma.interview.findMany({
+      take: Number(pageSize) || 10,
+      skip: Number(page) * Number(pageSize) || undefined,
       select: {
         id: true,
         date: true,
@@ -14,6 +33,51 @@ export const getInterviews = async (req, res, next) => {
             status: true,
           },
         },
+      },
+      orderBy: [{ [sortedBy]: sortedWay }],
+      where: {
+        AND: [
+          studentId
+            ? {
+                intern: {
+                  id: {
+                    contains: studentId,
+                  },
+                },
+              }
+            : {},
+          eduYearId
+            ? {
+                InternStatus: {
+                  form: {
+                    edu_year: {
+                      id: {
+                        equals: eduYearId * 1 || undefined,
+                      },
+                    },
+                  },
+                },
+              }
+            : {},
+          comissionId
+            ? {
+                comission: {
+                  id: {
+                    contains: comissionId,
+                  },
+                },
+              }
+            : {},
+          status
+            ? {
+                InternStatus: {
+                  status: status,
+                },
+              }
+            : {},
+
+          date ? { date: date } : {},
+        ],
       },
     });
 

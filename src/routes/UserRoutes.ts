@@ -3,6 +3,7 @@ import {
   addMultipleUser,
   addUser,
   deleteUserById,
+  getComissionAC,
   getStudentAC,
   getUserById,
   getUsers,
@@ -27,5 +28,6 @@ UserRouter.delete("/delete/:userId", deleteUserById);
 
 // AC
 UserRouter.get("/autocomplete/student", getStudentAC);
+UserRouter.get("/autocomplete/comission", getComissionAC);
 
 export default UserRouter;

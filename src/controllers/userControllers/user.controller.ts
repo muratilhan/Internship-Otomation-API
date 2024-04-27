@@ -151,7 +151,37 @@ export const getStudentAC = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: students || [] });
+    const modifiedStudents = students.map((student) => ({
+      id: student.id,
+      label: `${student.name} ${student.last_name}`,
+      subtext: student.school_number ? student.school_number : "",
+    }));
+
+    res.status(200).json({ data: modifiedStudents || [] });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getComissionAC = async (req, res, next) => {
+  try {
+    const comissions = await prisma.user.findMany({
+      where: { user_type: UserRoles.comission },
+      select: {
+        name: true,
+        last_name: true,
+        id: true,
+        school_number: true,
+      },
+    });
+
+    const modifiedComissions = comissions.map((user) => ({
+      id: user.id,
+      label: `${user.name} ${user.last_name}`,
+      subtext: user.school_number ? user.school_number : "",
+    }));
+
+    res.status(200).json({ data: modifiedComissions || [] });
   } catch (error) {
     next(error);
   }
