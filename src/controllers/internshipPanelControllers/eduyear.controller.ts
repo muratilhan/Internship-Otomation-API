@@ -23,6 +23,7 @@ export const addEduYear = async (req, res, next) => {
         name: name,
       },
     });
+    res.status(200).json({ message: "eduYear succesfully added" });
   } catch (error) {
     next(error);
   }

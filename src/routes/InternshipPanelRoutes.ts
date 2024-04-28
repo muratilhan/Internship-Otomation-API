@@ -1,5 +1,9 @@
 import express from "express";
-import { getHolidays } from "../controllers/internshipPanelControllers/holiday.controller";
+import {
+  addHoliday,
+  deleteHoliday,
+  getHolidays,
+} from "../controllers/internshipPanelControllers/holiday.controller";
 import {
   addEduYear,
   deleteEduYear,
@@ -22,9 +26,9 @@ InternshipPanelRouter.get("/getConfidentalMailList");
 InternshipPanelRouter.post("/sendConfidentalMail");
 
 // Holiday
-InternshipPanelRouter.post("/holiday/add");
+InternshipPanelRouter.post("/holiday/add", addHoliday);
 
-InternshipPanelRouter.delete("/holiday/delete/:holidayId");
+InternshipPanelRouter.delete("/holiday/delete/:holidayId", deleteHoliday);
 
 InternshipPanelRouter.get("/holiday/get", getHolidays);
 

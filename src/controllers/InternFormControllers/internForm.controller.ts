@@ -82,7 +82,15 @@ export const addForm = async (req, res, next) => {
     // get body
     const userId = req.id;
 
-    const { studentId, startDate, endDate, eduYearId } = req.body;
+    const {
+      studentId,
+      startDate,
+      endDate,
+      eduYearId,
+      isInTerm,
+      weekDayWork,
+      workOnSaturday,
+    } = req.body;
 
     // is there any record with student id already created a record that between the start_date and end_date and not sealed
 
@@ -101,9 +109,16 @@ export const addForm = async (req, res, next) => {
     }
 
     // TODO: calculate the totalWorkDay
+    const isStudentWorkOnSaturday = workOnSaturday || false;
+
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
 
-    const totalWorkDay = calculateBussinesDates(startDate, endDate, holidays);
+    const totalWorkDay = calculateBussinesDates(
+      startDate,
+      endDate,
+      holidays,
+      isStudentWorkOnSaturday
+    );
 
     console.log(totalWorkDay);
 
@@ -134,6 +149,9 @@ export const addForm = async (req, res, next) => {
             id: studentId,
           },
         },
+        isInTerm: isInTerm,
+        weekDayWork: weekDayWork,
+        workOnSaturday: isStudentWorkOnSaturday,
         total_work_day: totalWorkDay,
         start_date: new Date(startDate),
         end_date: new Date(endDate),
@@ -249,12 +267,26 @@ export const updateForm = async (req, res, next) => {
 
     const internFormId = req.params.internFormId;
 
-    const { studentId, startDate, endDate, eduYearId } = req.body;
+    const {
+      studentId,
+      startDate,
+      endDate,
+      eduYearId,
+      isInTerm,
+      weekDayWork,
+      workOnSaturday,
+    } = req.body;
 
     // TODO: calculate the totalWorkDay
+    const isStudentWorkOnSaturday = workOnSaturday || false;
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
 
-    const totalWorkDay = calculateBussinesDates(startDate, endDate, holidays);
+    const totalWorkDay = calculateBussinesDates(
+      startDate,
+      endDate,
+      holidays,
+      isStudentWorkOnSaturday
+    );
 
     if (totalWorkDay > 60 || totalWorkDay < 1) {
       res.status(400).json({ message: "totalwork day is not " });
@@ -286,6 +318,11 @@ export const updateForm = async (req, res, next) => {
             id: studentId,
           },
         },
+
+        isInTerm: isInTerm,
+        weekDayWork: weekDayWork,
+        workOnSaturday: isStudentWorkOnSaturday,
+
         total_work_day: totalWorkDay,
         start_date: new Date(startDate),
         end_date: new Date(endDate),
