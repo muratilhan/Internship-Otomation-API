@@ -184,8 +184,8 @@ model Interview {
 
   date DateTime
 
-  intern    User?   @relation("intern_student", fields: [intern_id], references: [id])
-  intern_id String?
+  student    User?   @relation("intern_student", fields: [student_id], references: [id])
+  student_id String?
 
   comission    User?   @relation("comission", fields: [comission_id], references: [id])
   comission_id String?

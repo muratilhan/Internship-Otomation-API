@@ -1,11 +1,20 @@
 import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
 import { calculateBussinesDates } from "../../handlers/dates.handler";
+import {
+  isSealedQueryCheck,
+  releatedRecordQueryControl,
+} from "../../handlers/query.handler";
 
 export const getForms = async (req, res, next) => {
   try {
     // get pagination
     const { pageSize, page } = req.query;
+
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
 
     // get sort
     let { sortedBy, sortedWay } = req.query;
@@ -36,6 +45,7 @@ export const getForms = async (req, res, next) => {
         id: true,
         createdAt: true,
         start_date: true,
+        isSealed: true,
         end_date: true,
         edu_year: true,
         total_work_day: true,
@@ -56,6 +66,7 @@ export const getForms = async (req, res, next) => {
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
+        student: recordControl,
         createdBy: createdBy,
         AND: [
           studentId ? { student: { id: { contains: studentId } } } : {},
@@ -96,7 +107,6 @@ export const addForm = async (req, res, next) => {
 
     const isDuplicateForm = await prisma.internForm.findFirst({
       where: {
-        isDeleted: false,
         student_id: studentId,
         isSealed: false,
       },
@@ -194,6 +204,11 @@ export const addForm = async (req, res, next) => {
 
 export const getFormById = async (req, res, next) => {
   try {
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
+
     const internFormId = req.params.internFormId;
 
     const selectUserTag = { select: { id: true, name: true, last_name: true } };
@@ -201,6 +216,7 @@ export const getFormById = async (req, res, next) => {
     const internForm = await prisma.internForm.findUnique({
       where: {
         id: internFormId,
+        student: recordControl,
       },
       select: {
         id: true,
@@ -253,6 +269,10 @@ export const getFormById = async (req, res, next) => {
       },
     });
 
+    if (!internForm) {
+      res.status(204).json({ message: "no content" });
+    }
+
     res.status(200).json({ data: internForm });
   } catch (e) {
     next(e);
@@ -260,10 +280,9 @@ export const getFormById = async (req, res, next) => {
 };
 
 export const updateForm = async (req, res, next) => {
-  // get body
-  // if person was student and the record is sealed he / she cannot update the record --> this should be handled in prisma.use middleware
   try {
     const userId = req.id;
+    const userRole = req.roles;
 
     const internFormId = req.params.internFormId;
 
@@ -297,6 +316,16 @@ export const updateForm = async (req, res, next) => {
         user_type: UserRoles.admin,
       },
     });
+
+    const form = await prisma.internForm.findUnique({
+      where: {
+        id: internFormId,
+      },
+    });
+
+    if (isSealedQueryCheck(userRole, form.isSealed)) {
+      res.status(403).json({ message: "cant access the record" });
+    }
 
     const updatedForm = await prisma.internForm.update({
       where: {

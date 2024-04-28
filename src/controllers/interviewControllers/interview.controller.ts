@@ -26,7 +26,7 @@ export const getInterviews = async (req, res, next) => {
       select: {
         id: true,
         date: true,
-        intern: selectUserTag,
+        student: selectUserTag,
         comission: selectUserTag,
         internStatus: {
           select: {
@@ -39,7 +39,7 @@ export const getInterviews = async (req, res, next) => {
         AND: [
           studentId
             ? {
-                intern: {
+                student: {
                   id: {
                     contains: studentId,
                   },
@@ -106,7 +106,7 @@ export const getInterviewById = async (req, res, next) => {
         isSealed: true,
         date: true,
 
-        intern: {
+        student: {
           select: {
             id: true,
             name: true,
@@ -153,7 +153,7 @@ export const addNewInterview = async (req, res, next) => {
           },
         },
 
-        intern: {
+        student: {
           connect: {
             id: internId,
           },
