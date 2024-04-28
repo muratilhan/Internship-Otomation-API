@@ -83,6 +83,10 @@ model InternForm {
   isDeleted Boolean @default(false)
   isSealed  Boolean @default(false)
 
+  isInTerm       Boolean   @default(true)
+  weekDayWork    Boolean[]
+  workOnSaturday Boolean   @default(false)
+
   start_date     DateTime
   end_date       DateTime
   total_work_day Int
@@ -183,9 +187,16 @@ model Interview {
   intern    User?   @relation("intern_student", fields: [intern_id], references: [id])
   intern_id String?
 
-  comission    User?         @relation("comission", fields: [comission_id], references: [id])
+  comission    User?   @relation("comission", fields: [comission_id], references: [id])
   comission_id String?
-  InternStatus InternStatus?
+
+  internStatus InternStatus?
+
+  survey    Survey? @relation(fields: [survey_id], references: [id])
+  survey_id String? @unique
+
+  confidentalReport    ConfidentalReport? @relation(fields: [confidentalReport_id], references: [id])
+  confidentalReport_id String?            @unique
 }
 
 model Survey {
@@ -211,6 +222,8 @@ model Survey {
 
   date    DateTime
   answers Json
+
+  interview Interview?
 }
 
 model ConfidentalReport {
@@ -245,10 +258,12 @@ model ConfidentalReport {
   reg_number     String
   auth_tc_number String
   auth_title     String
+
+  interview Interview?
 }
 
 model Holidays {
-  id   String   @id @default(uuid())
+  id   Int      @id @default(autoincrement())
   date DateTime
 }
 

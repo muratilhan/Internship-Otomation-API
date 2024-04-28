@@ -28,7 +28,7 @@ export const getInterviews = async (req, res, next) => {
         date: true,
         intern: selectUserTag,
         comission: selectUserTag,
-        InternStatus: {
+        internStatus: {
           select: {
             status: true,
           },
@@ -48,7 +48,7 @@ export const getInterviews = async (req, res, next) => {
             : {},
           eduYearId
             ? {
-                InternStatus: {
+                internStatus: {
                   form: {
                     edu_year: {
                       id: {
@@ -70,7 +70,7 @@ export const getInterviews = async (req, res, next) => {
             : {},
           status
             ? {
-                InternStatus: {
+                internStatus: {
                   status: status,
                 },
               }
@@ -117,7 +117,7 @@ export const getInterviewById = async (req, res, next) => {
         },
 
         comission: selectUserTag,
-        InternStatus: {
+        internStatus: {
           select: {
             id: true,
             status: true,
@@ -147,7 +147,7 @@ export const addNewInterview = async (req, res, next) => {
         },
         date: new Date(date),
 
-        InternStatus: {
+        internStatus: {
           connect: {
             id: internStatusId,
           },
