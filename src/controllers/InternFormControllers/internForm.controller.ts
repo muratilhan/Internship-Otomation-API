@@ -1,5 +1,8 @@
 import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import { AuthorizationError } from "../../errors/AuthorizationError";
+import { BadRequestError } from "../../errors/BadRequestError";
 import { calculateBussinesDates } from "../../handlers/dates.handler";
 import {
   isSealedQueryCheck,
@@ -15,6 +18,8 @@ export const getForms = async (req, res, next) => {
     const userRole = req.roles;
 
     const recordControl = releatedRecordQueryControl(userRole, userId);
+
+    console.log("red");
 
     // get sort
     let { sortedBy, sortedWay } = req.query;
@@ -92,16 +97,10 @@ export const addForm = async (req, res, next) => {
   try {
     // get body
     const userId = req.id;
+    const userRole = req.roles;
 
-    const {
-      studentId,
-      startDate,
-      endDate,
-      eduYearId,
-      isInTerm,
-      weekDayWork,
-      workOnSaturday,
-    } = req.body;
+    const { studentId, startDate, endDate, eduYearId, isInTerm, weekDayWork } =
+      req.body;
 
     // is there any record with student id already created a record that between the start_date and end_date and not sealed
 
@@ -113,13 +112,12 @@ export const addForm = async (req, res, next) => {
     });
 
     if (isDuplicateForm) {
-      return res
-        .status(400)
-        .json({ message: "you cannot create another internship form" });
+      throw new BadRequestError(errorCodes.INTF_DUPLICATE_FORM);
     }
 
     // TODO: calculate the totalWorkDay
-    const isStudentWorkOnSaturday = workOnSaturday || false;
+
+    const isStudentWorkOnSaturday = weekDayWork.includes(6);
 
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
 
@@ -127,13 +125,11 @@ export const addForm = async (req, res, next) => {
       startDate,
       endDate,
       holidays,
-      isStudentWorkOnSaturday
+      weekDayWork
     );
 
-    console.log(totalWorkDay);
-
     if (totalWorkDay > 60 || totalWorkDay < 1) {
-      return res.status(400).json({ message: "totalwork day is not " });
+      throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
     }
 
     const adminUser = await prisma.user.findFirst({
@@ -225,9 +221,16 @@ export const getFormById = async (req, res, next) => {
         updatedAt: true,
         updatedBy: selectUserTag,
 
+        isSealed: true,
+
+        isInTerm: true,
+        weekDayWork: true,
+        workOnSaturday: true,
+
         start_date: true,
         end_date: true,
         total_work_day: true,
+
         edu_faculty: true,
         edu_program: true,
         edu_year: true,
@@ -270,7 +273,7 @@ export const getFormById = async (req, res, next) => {
     });
 
     if (!internForm) {
-      res.status(204).json({ message: "no content" });
+      throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
     res.status(200).json({ data: internForm });
@@ -286,29 +289,22 @@ export const updateForm = async (req, res, next) => {
 
     const internFormId = req.params.internFormId;
 
-    const {
-      studentId,
-      startDate,
-      endDate,
-      eduYearId,
-      isInTerm,
-      weekDayWork,
-      workOnSaturday,
-    } = req.body;
+    const { studentId, startDate, endDate, eduYearId, isInTerm, weekDayWork } =
+      req.body;
 
     // TODO: calculate the totalWorkDay
-    const isStudentWorkOnSaturday = workOnSaturday || false;
+    const isStudentWorkOnSaturday = weekDayWork.includes(6);
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
 
     const totalWorkDay = calculateBussinesDates(
       startDate,
       endDate,
       holidays,
-      isStudentWorkOnSaturday
+      weekDayWork
     );
 
     if (totalWorkDay > 60 || totalWorkDay < 1) {
-      res.status(400).json({ message: "totalwork day is not " });
+      throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
     }
 
     const adminUser = await prisma.user.findFirst({
@@ -324,7 +320,7 @@ export const updateForm = async (req, res, next) => {
     });
 
     if (isSealedQueryCheck(userRole, form.isSealed)) {
-      res.status(403).json({ message: "cant access the record" });
+      throw new AuthorizationError(errorCodes.NOT_PERMISSION);
     }
 
     const updatedForm = await prisma.internForm.update({
@@ -363,7 +359,9 @@ export const updateForm = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "form updated succesfully" });
+    res
+      .status(200)
+      .json({ data: updatedForm.id, message: "form updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -373,8 +371,20 @@ export const deleteForm = async (req, res, next) => {
   try {
     const internFormId = req.params.internFormId;
 
-    await prisma.internForm.delete({ where: { id: internFormId } });
-    res.status(200).json({ message: "Form deleted succesfully" });
+    const deletedRecord = await prisma.internForm.findUnique({
+      where: { id: internFormId },
+    });
+
+    if (!deletedRecord) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    await prisma.internForm.update({
+      where: { id: internFormId },
+      data: { isDeleted: true },
+    });
+
+    return res.status(200).json({ message: "Form deleted succesfully" });
   } catch (e) {
     next(e);
   }

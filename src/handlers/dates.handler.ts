@@ -1,12 +1,9 @@
 // TODO: calculate JS Dates between 2 dates except holidays and return totalDay
 
-function isWeekend(date, isStudentWorkOnSaturday) {
+function calculateWeeklyWork(date, weekDayWork) {
   const day = date.getDay();
-  if (isStudentWorkOnSaturday) {
-    return day === 0; // sadece Pazar
-  } else {
-    return day === 0 || day === 6; // Pazar (0) veya Cumartesi (6) ise true döndür
-  }
+  const weeklyWork = weekDayWork || [];
+  return weeklyWork.includes(day);
 }
 
 function isHoliday(date, holidays) {
@@ -18,7 +15,7 @@ export const calculateBussinesDates = (
   startDate,
   endDate,
   holidays,
-  isStudentWorkOnSaturday
+  weekDayWork
 ) => {
   let count = 0;
 
@@ -26,12 +23,14 @@ export const calculateBussinesDates = (
   const finalDate = new Date(endDate);
   while (currentDate <= finalDate) {
     if (
-      !isWeekend(currentDate, isStudentWorkOnSaturday) &&
+      calculateWeeklyWork(currentDate, weekDayWork) &&
       !isHoliday(currentDate, holidays)
     ) {
       count++;
     }
     currentDate.setDate(currentDate.getDate() + 1);
   }
+
+  console.log("count", count);
   return count;
 };

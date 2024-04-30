@@ -1,6 +1,7 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
+import { isSealedQueryCheck } from "../../handlers/query.handler";
 
 export const addCompanyInfo = async (req, res, next) => {
   try {
@@ -31,10 +32,23 @@ export const addCompanyInfo = async (req, res, next) => {
 
 export const updateCompanyInfo = async (req, res, next) => {
   try {
+    const userId = req.id;
+    const userRole = req.roles;
+
     const companyInfoId = req.params.companyInfoId;
 
     const { internFormId, name, address, phone, fax, email, serviceArea } =
       req.body;
+
+    const companyInfo = await prisma.companyInfo.findUnique({
+      where: {
+        id: companyInfoId,
+      },
+    });
+
+    if (isSealedQueryCheck(userRole, companyInfo.isSealed)) {
+      res.status(403).json({ message: "cant access the record" });
+    }
 
     await prisma.companyInfo.update({
       where: { id: companyInfoId },
