@@ -30,6 +30,22 @@ const prisma = new PrismaClient().$extends({
 
         return query(args);
       },
+      async findUnique({ model, operation, args, query }) {
+        // set `take` and fill with the rest of `args`
+        if (modelsWithIsDeleted.includes(model)) {
+          args.where = { isDeleted: false, ...args.where };
+        }
+
+        return query(args);
+      },
+      async update({ model, operation, args, query }) {
+        // set `take` and fill with the rest of `args`
+        if (modelsWithIsDeleted.includes(model)) {
+          args.where = { isDeleted: false, ...args.where };
+        }
+
+        return query(args);
+      },
     },
   },
 });
