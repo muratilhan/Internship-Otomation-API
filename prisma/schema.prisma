@@ -20,9 +20,17 @@ enum USER_TYPE {
 }
 
 enum INTERN_STATUS {
-  START
-  DOING
-  END
+  FRM01
+  FRM02
+  FRM03
+  RED01
+  MLK01
+  MLK02
+  MLK03
+  MLK04
+  RED02
+  RED03
+  STJ00
 }
 
 model User {
@@ -67,6 +75,8 @@ model User {
 
   ConfidentalReportCreated ConfidentalReport[] @relation("CreatedByRelation")
   ConfidentalReportUpdated ConfidentalReport[] @relation("UpdatedByRelation")
+
+  InternStatusTrackCreated InternStatusTrack[] @relation("CreatedByRelation")
 }
 
 model InternForm {
@@ -166,7 +176,25 @@ model InternStatus {
   form    InternForm? @relation(fields: [form_id], references: [id])
   form_id String?     @unique
 
-  status INTERN_STATUS @default(START)
+  status INTERN_STATUS @default(FRM01)
+
+  internStatusTracks InternStatusTrack[]
+}
+
+model InternStatusTrack {
+  id String @id @default(uuid())
+
+  createdAt   DateTime @default(now())
+  createdBy   User     @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String
+
+  prevStatus INTERN_STATUS
+  nextStatus INTERN_STATUS
+
+  desc String
+
+  internStatus   InternStatus @relation(fields: [internStatusId], references: [id])
+  internStatusId String
 }
 
 model Interview {
