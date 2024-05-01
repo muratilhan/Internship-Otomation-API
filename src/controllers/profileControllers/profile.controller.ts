@@ -1,6 +1,7 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { AuthenticationError } from "../../errors/AuthenticationError";
+import { BadRequestError } from "../../errors/BadRequestError";
 
 export const getMyProfile = async (req, res, next) => {
   const userId = req.id;
@@ -9,28 +10,21 @@ export const getMyProfile = async (req, res, next) => {
     throw new AuthenticationError(errorCodes.NOT_AUTHENTICATE);
   }
 
-  const userInfo = await prisma.user.findUnique({ where: { id: userId } });
+  const userInfo = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      last_name: true,
+      tc_number: true,
+      school_number: true,
+    },
+  });
 
   if (!userInfo) {
-    return res.json({});
+    throw new BadRequestError(errorCodes.NOT_FOUND);
   }
 
-  const userDto = {
-    name: null,
-    lastName: null,
-    studentId: null,
-    tcNumber: null,
-    email: null,
-    avatarImg: null,
-  };
-  userDto.name = userInfo.name;
-  userDto.lastName = userInfo.last_name;
-  userDto.studentId = userInfo.school_number;
-  userDto.tcNumber = userInfo.tc_number;
-  userDto.email = userInfo.email;
-  userDto.avatarImg = ""; // not for now
-
-  return res.json(userDto);
+  return res.status(200).json({ data: userInfo });
 };
 
 export const updateMyProfile = async (req, res, next) => {
