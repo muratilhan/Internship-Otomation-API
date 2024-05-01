@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "ConfidentalReport" ALTER COLUMN "company_name" DROP NOT NULL,
+ALTER COLUMN "address" DROP NOT NULL,
+ALTER COLUMN "start_date" DROP NOT NULL,
+ALTER COLUMN "end_date" DROP NOT NULL,
+ALTER COLUMN "days_of_absence" DROP NOT NULL,
+ALTER COLUMN "department" DROP NOT NULL,
+ALTER COLUMN "is_edu_program" DROP NOT NULL,
+ALTER COLUMN "intern_evaluation" DROP NOT NULL,
+ALTER COLUMN "auth_name" DROP NOT NULL,
+ALTER COLUMN "auth_position" DROP NOT NULL,
+ALTER COLUMN "reg_number" DROP NOT NULL,
+ALTER COLUMN "auth_tc_number" DROP NOT NULL,
+ALTER COLUMN "auth_title" DROP NOT NULL,
+ALTER COLUMN "school_number" DROP NOT NULL;

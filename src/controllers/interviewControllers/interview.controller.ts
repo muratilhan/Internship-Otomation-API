@@ -1,4 +1,6 @@
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import { BadRequestError } from "../../errors/BadRequestError";
 
 export const getInterviews = async (req, res, next) => {
   try {
@@ -136,7 +138,15 @@ export const addNewInterview = async (req, res, next) => {
   try {
     const userId = req.id;
 
-    const { date, comissionId, internStatusId, internId } = req.body;
+    const { date, comissionId, internStatusId } = req.body;
+
+    const internStatus = await prisma.internStatus.findUnique({
+      where: { id: internStatusId },
+    });
+
+    if (!internStatus) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
 
     const newInterview = await prisma.interview.create({
       data: {
@@ -155,7 +165,7 @@ export const addNewInterview = async (req, res, next) => {
 
         student: {
           connect: {
-            id: internId,
+            id: internStatus.student_id,
           },
         },
 

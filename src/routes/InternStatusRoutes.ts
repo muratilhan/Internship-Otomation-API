@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getInternStatusAC,
   getInternStatusById,
   getInternStatuses,
   updateInternStatus,
@@ -20,5 +21,8 @@ InternStatusRouter.put("/update/status/:interStatusId", updateOnlyStatus);
 
 // delete all connections with that internStatus --> InternForm , Interview , Survey , Confidental Report
 InternStatusRouter.delete("/delete/:internStatusId");
+
+// AC
+InternStatusRouter.get("/autocomplete", getInternStatusAC);
 
 export default InternStatusRouter;

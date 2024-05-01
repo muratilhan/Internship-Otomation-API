@@ -42,3 +42,17 @@ export const generatePasswordChangeToken = async (email, id) => {
   );
   return passwordRefreshToken;
 };
+
+export const generateCompanyConfidentalReportToken = async (
+  recordId,
+  studentId
+) => {
+  const companyConfidentalReportToken = jwt.sign(
+    { id: recordId, studentId: studentId },
+    process.env.COMPANY_CONFIDENTAL_TOKEN,
+    {
+      expiresIn: "2d",
+    }
+  );
+  return companyConfidentalReportToken;
+};

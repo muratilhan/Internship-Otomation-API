@@ -1,4 +1,7 @@
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import { BadRequestError } from "../../errors/BadRequestError";
+import { formatDate } from "../../handlers/dates.handler";
 
 export const getInternStatuses = async (req, res, next) => {
   try {
@@ -134,6 +137,20 @@ export const getInternStatusById = async (req, res, next) => {
           },
         },
         status: true,
+        internStatusTracks: {
+          where: {
+            internStatusId: internStatusId,
+          },
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            createdAt: true,
+            createdBy: selectUserTag,
+            prevStatus: true,
+            nextStatus: true,
+            desc: true,
+          },
+        },
 
         form: {
           select: {
@@ -173,7 +190,37 @@ export const updateInternStatus = async (req, res, next) => {
 
     const internStatusId = req.params.internStatusId;
 
-    const { formId, studentId, interviewId, status } = req.body;
+    const { status, desc } = req.body;
+
+    const form = await prisma.internStatus.findUnique({
+      where: {
+        id: internStatusId,
+      },
+    });
+
+    if (!form) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    if (desc) {
+      const newInternStatusTrack = await prisma.internStatusTrack.create({
+        data: {
+          createdBy: {
+            connect: {
+              id: userId,
+            },
+          },
+          prevStatus: form.status,
+          nextStatus: status,
+          desc: desc,
+          internStatus: {
+            connect: {
+              id: form.id,
+            },
+          },
+        },
+      });
+    }
 
     const updatedForm = await prisma.internStatus.update({
       where: {
@@ -185,21 +232,14 @@ export const updateInternStatus = async (req, res, next) => {
             id: userId,
           },
         },
-        form: {
-          connect: {
-            id: formId,
-          },
-        },
-        student: {
-          connect: {
-            id: studentId,
-          },
-        },
-        interview: {
-          connect: interviewId,
-        },
-
         status: status,
+        form: {
+          update: {
+            data: {
+              isSealed: true,
+            },
+          },
+        },
       },
     });
 
@@ -218,6 +258,47 @@ export const deleteInternStatus = async (req, res, next) => {
 
 export const updateOnlyStatus = async (req, res, next) => {
   try {
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getInternStatusAC = async (req, res, next) => {
+  try {
+    const selectStudentTag = {
+      select: { id: true, name: true, last_name: true, school_number: true },
+    };
+    const internStatuses = await prisma.internStatus.findMany({
+      select: {
+        id: true,
+        student: selectStudentTag,
+        status: true,
+        form: {
+          select: {
+            start_date: true,
+            end_date: true,
+            company_info: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const modifiedInternForms = internStatuses.map((internStatus) => ({
+      id: internStatus.id,
+      label: `${internStatus.student.name} ${internStatus.student.last_name}`,
+      subtext: `${internStatus.student.school_number || ""}\n${formatDate(
+        internStatus.form.start_date
+      )} - ${formatDate(internStatus.form.end_date)}\n${
+        internStatus.form.company_info.name
+      }`,
+      translate: internStatus.status,
+    }));
+
+    res.status(200).json({ data: modifiedInternForms || [] });
   } catch (error) {
     next(error);
   }

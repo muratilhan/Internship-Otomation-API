@@ -38,7 +38,14 @@ model User {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
-  createdby String?
+
+  createdBy   User?   @relation("createdBy", fields: [createdById], references: [id])
+  createdById String?
+
+  updatedBy   User?   @relation("updatedBy", fields: [updatedById], references: [id])
+  updatedById String?
+
+  // updatedBy   User?
 
   isDeleted Boolean @default(false)
 
@@ -49,8 +56,12 @@ model User {
 
   user_type USER_TYPE @default(STUDENT)
 
-  tc_number           String?
-  school_number       String?
+  tc_number     String?
+  school_number String?
+
+  isGraduate     Boolean?
+  graduationDate DateTime?
+
   refreshToken        String[]
   passwordChangeToken String   @default("")
 
@@ -77,6 +88,9 @@ model User {
   ConfidentalReportUpdated ConfidentalReport[] @relation("UpdatedByRelation")
 
   InternStatusTrackCreated InternStatusTrack[] @relation("CreatedByRelation")
+
+  userCreatedBy User[] @relation("createdBy")
+  userUpdatedBy User[] @relation("updatedBy")
 }
 
 model InternForm {
@@ -261,34 +275,37 @@ model ConfidentalReport {
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
 
-  createdBy   User    @relation("CreatedByRelation", fields: [createdById], references: [id])
-  createdById String
+  createdBy   User?   @relation("CreatedByRelation", fields: [createdById], references: [id])
+  createdById String?
   updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
   updatedById String?
 
   isDeleted    Boolean @default(false)
   isMailSended Boolean @default(false)
+  isSealed     Boolean @default(false)
 
-  school_number String
+  school_number String?
 
-  company_name String
-  address      String
+  company_name String?
+  address      String?
 
-  start_date      DateTime
-  end_date        DateTime
-  days_of_absence Int
-  department      String
-  is_edu_program  Boolean
+  start_date      DateTime?
+  end_date        DateTime?
+  days_of_absence Int?
+  department      String?
+  is_edu_program  Boolean?
 
-  intern_evaluation Json
+  intern_evaluation Json?
 
-  auth_name      String
-  auth_position  String
-  reg_number     String
-  auth_tc_number String
-  auth_title     String
+  auth_name      String?
+  auth_position  String?
+  reg_number     String?
+  auth_tc_number String?
+  auth_title     String?
 
   interview Interview?
+
+  companyAccesToken String @default("")
 }
 
 model Holidays {
