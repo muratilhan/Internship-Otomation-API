@@ -64,7 +64,7 @@ export const changePassword = async (req, res, next) => {
       data: { passwordChangeToken: "", password: await hashPassword(password) },
     });
 
-    res.send("password reset sucessfully.");
+    res.status(200).json({ message: "password reset sucessfully." });
   } catch (error) {
     console.log(error);
     next(error);
