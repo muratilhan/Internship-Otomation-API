@@ -14,10 +14,18 @@ const errorCodes = {
 
   // General
   NOT_FOUND: "GNR001",
+  UNEXPECTED: "00000",
 
   // InternForm
   INTF_TOTAL_DAY: "INTF001",
   INTF_DUPLICATE_FORM: "INTF002",
+
+  // Confidental Report
+  CR_DUPLICATE_MAIL: "CR001",
+
+  // Survey
+
+  SUR_DUPLICATE: "SUR001",
 };
 
 export default errorCodes;

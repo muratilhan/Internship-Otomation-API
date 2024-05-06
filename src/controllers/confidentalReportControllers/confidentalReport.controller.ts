@@ -1,12 +1,103 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
+import { releatedRecordQueryControl } from "../../handlers/query.handler";
+
+export const getAllConfidentalReports = async (req, res, next) => {
+  try {
+    // get pagination
+    const { pageSize, page } = req.query;
+
+    // get sort
+    let { sortedBy, sortedWay } = req.query;
+
+    if (!sortedBy) {
+      sortedBy = "createdAt";
+    }
+    if (!sortedWay) {
+      sortedWay = "asc";
+    }
+
+    // get filter
+    const {
+      createdBy,
+      eduYearId,
+      studentId,
+      companyName,
+      isMailSended,
+      isSealed,
+    } = req.query;
+
+    const confidentalReports = await prisma.confidentalReport.findMany({
+      take: Number(pageSize) || 10,
+      skip: Number(page) * Number(pageSize) || undefined,
+      select: {
+        id: true,
+        createdAt: true,
+        isSealed: true,
+        company_name: true,
+        isMailSended: true,
+        start_date: true,
+        end_date: true,
+        department: true,
+      },
+      orderBy: [{ [sortedBy]: sortedWay }],
+      where: {
+        createdBy: createdBy,
+        AND: [
+          studentId
+            ? { interview: { student: { id: { contains: studentId } } } }
+            : {},
+          companyName ? { company_name: { contains: companyName } } : {},
+          eduYearId
+            ? {
+                interview: {
+                  internStatus: {
+                    form: { edu_year: { id: { equals: eduYearId * 1 } } },
+                  },
+                },
+              }
+            : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+          isMailSended ? { isSealed: isMailSended === "true" } : {},
+        ],
+      },
+    });
+
+    const confidentalCount = await prisma.confidentalReport.count({
+      where: {
+        createdBy: createdBy,
+        AND: [
+          studentId
+            ? { interview: { student: { id: { contains: studentId } } } }
+            : {},
+          companyName ? { company_name: { contains: companyName } } : {},
+          eduYearId
+            ? {
+                interview: {
+                  internStatus: {
+                    form: { edu_year: { id: { equals: eduYearId * 1 } } },
+                  },
+                },
+              }
+            : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+          isMailSended ? { isSealed: isMailSended === "true" } : {},
+        ],
+      },
+    });
+    res
+      .status(200)
+      .json({ data: confidentalReports, dataLength: confidentalCount });
+  } catch (e) {
+    next(e);
+  }
+};
 
 export const addNewConfidentalReport = async (req, res, next) => {
   try {
-    console.log("burası confidental addd");
     const {
-      school_number,
+      interviewId,
       company_name,
       address,
       start_date,
@@ -21,6 +112,7 @@ export const addNewConfidentalReport = async (req, res, next) => {
       auth_tc_number,
       auth_title,
     } = req.body;
+
     const userId = req.id;
 
     const confidentalReport = await prisma.confidentalReport.create({
@@ -30,14 +122,18 @@ export const addNewConfidentalReport = async (req, res, next) => {
             id: userId,
           },
         },
-        school_number: "0320 33 333",
+        interview: {
+          connect: {
+            id: interviewId,
+          },
+        },
         company_name: company_name,
         start_date: new Date(start_date),
         end_date: new Date(end_date),
         address: address,
         days_of_absence: days_of_absence,
         department: department,
-        is_edu_program: is_edu_program == "Evet" ? true : false,
+        is_edu_program: is_edu_program,
         intern_evaluation: intern_evaluation,
         auth_name: auth_name,
         auth_position: auth_position,
@@ -47,32 +143,16 @@ export const addNewConfidentalReport = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({
-      message: "confidentalReport added successfully",
-      confidentalReport,
-    });
+    res.status(200).json({ message: "confidentalReport added successfully" });
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllConfidentalReports = async (req, res, next) => {
-  try {
-    const confidentalReports = await prisma.confidentalReport.findMany();
-    res
-      .status(200)
-      .json({ data: confidentalReports, dataLenth: confidentalReports.length });
-  } catch (e) {
-    next(e);
-  }
-};
-
 export const updateConfidentalReport = async (req, res, next) => {
   try {
-    const confidentalReportId = req.params.confidentalReportId;
-    console.log("burası confidental update");
+    const { confidentalReportId } = req.params;
     const {
-      school_number,
       company_name,
       address,
       start_date,
@@ -92,14 +172,13 @@ export const updateConfidentalReport = async (req, res, next) => {
         id: confidentalReportId,
       },
       data: {
-        school_number: "123123",
         company_name: company_name,
         start_date: new Date(start_date),
         end_date: new Date(end_date),
         address: address,
         days_of_absence: days_of_absence,
         department: department,
-        is_edu_program: is_edu_program == "Evet" ? true : false,
+        is_edu_program: is_edu_program,
         intern_evaluation: intern_evaluation,
         auth_name: auth_name,
         auth_position: auth_position,
@@ -109,10 +188,9 @@ export const updateConfidentalReport = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({
-      message: "confidentalReport has been updated succesfully",
-      updatedConfidentalReport,
-    });
+    res
+      .status(200)
+      .json({ message: "confidentalReport has been updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -122,10 +200,23 @@ export const deleteConfidentalReport = async (req, res, next) => {
   try {
     const confidentalReportId = req.params.confidentalReportId;
 
-    await prisma.confidentalReport.delete({
+    const deletedRecord = await prisma.confidentalReport.findUnique({
       where: { id: confidentalReportId },
     });
-    res.status(200).json({ message: "confidentalReport deleted succesfully" });
+
+    if (!deletedRecord) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    await prisma.survey.update({
+      where: { id: confidentalReportId },
+      data: {
+        isDeleted: true,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: "confidentalReport deleted succesfully" });
   } catch (e) {
     next(e);
   }
@@ -133,11 +224,13 @@ export const deleteConfidentalReport = async (req, res, next) => {
 
 export const getSingleConfidentalReport = async (req, res, next) => {
   try {
-    const confidentalReportId = req.params.confidentalReportId;
+    const { confidentalReportId } = req.params;
     const confidentalReport = await prisma.confidentalReport.findUnique({
       where: { id: confidentalReportId },
     });
-    res.status(200).json(confidentalReport);
+    res
+      .status(200)
+      .json({ data: confidentalReport, message: "selected data provided" });
   } catch (e) {
     next(e);
   }

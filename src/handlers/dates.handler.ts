@@ -1,5 +1,3 @@
-// TODO: calculate JS Dates between 2 dates except holidays and return totalDay
-
 function calculateWeeklyWork(date, weekDayWork) {
   const day = date.getDay();
   const weeklyWork = weekDayWork || [];

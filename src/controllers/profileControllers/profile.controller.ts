@@ -29,7 +29,7 @@ export const getMyProfile = async (req, res, next) => {
 
 export const updateMyProfile = async (req, res, next) => {
   const userId = req.id;
-  const { name, lastName, tcNumber, avatarImg } = req.body;
+  const { name, lastName, tcNumber } = req.body;
 
   if (!userId) {
     throw new AuthenticationError(errorCodes.NOT_AUTHENTICATE);
@@ -42,7 +42,6 @@ export const updateMyProfile = async (req, res, next) => {
       name: name,
       last_name: lastName,
       tc_number: tcNumber,
-      // avatarImg
     },
   });
 

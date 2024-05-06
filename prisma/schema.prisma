@@ -240,6 +240,8 @@ model Interview {
 
   confidentalReport    ConfidentalReport? @relation(fields: [confidentalReport_id], references: [id])
   confidentalReport_id String?            @unique
+
+  companyAccesToken String @default("")
 }
 
 model Survey {
@@ -254,6 +256,7 @@ model Survey {
   updatedById String?
 
   isDeleted Boolean @default(false)
+  isSealed  Boolean @default(false)
 
   company_name    String
   company_address String
@@ -284,8 +287,6 @@ model ConfidentalReport {
   isMailSended Boolean @default(false)
   isSealed     Boolean @default(false)
 
-  school_number String?
-
   company_name String?
   address      String?
 
@@ -304,8 +305,6 @@ model ConfidentalReport {
   auth_title     String?
 
   interview Interview?
-
-  companyAccesToken String @default("")
 }
 
 model Holidays {

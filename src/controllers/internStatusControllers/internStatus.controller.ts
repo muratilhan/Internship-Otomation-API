@@ -1,12 +1,19 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import InternStatus from "../../enums/internStatus";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { formatDate } from "../../handlers/dates.handler";
+import { releatedRecordQueryControl } from "../../handlers/query.handler";
 
 export const getInternStatuses = async (req, res, next) => {
   try {
     // get pagination
     const { pageSize, page } = req.query;
+
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
 
     // get sort
     let { sortedBy, sortedWay } = req.query;
@@ -62,6 +69,47 @@ export const getInternStatuses = async (req, res, next) => {
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
+        student: recordControl,
+        AND: [
+          studentId
+            ? {
+                student: {
+                  id: {
+                    contains: studentId,
+                  },
+                },
+              }
+            : {},
+          eduYearId
+            ? {
+                form: {
+                  edu_year: {
+                    id: {
+                      equals: eduYearId * 1 || undefined,
+                    },
+                  },
+                },
+              }
+            : {},
+          comissionId
+            ? {
+                interview: {
+                  comission: {
+                    id: {
+                      contains: comissionId,
+                    },
+                  },
+                },
+              }
+            : {},
+          status ? { status: status } : {},
+        ],
+      },
+    });
+
+    const internStatusesCount = await prisma.internStatus.count({
+      where: {
+        student: recordControl,
         AND: [
           studentId
             ? {
@@ -101,7 +149,7 @@ export const getInternStatuses = async (req, res, next) => {
 
     return res
       .status(200)
-      .json({ data: internStatuses, dataLength: internStatuses.length });
+      .json({ data: internStatuses, dataLength: internStatusesCount });
   } catch (error) {
     next(error);
   }
@@ -249,20 +297,6 @@ export const updateInternStatus = async (req, res, next) => {
   }
 };
 
-export const deleteInternStatus = async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateOnlyStatus = async (req, res, next) => {
-  try {
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const getInternStatusAC = async (req, res, next) => {
   try {
     const selectStudentTag = {
@@ -287,16 +321,18 @@ export const getInternStatusAC = async (req, res, next) => {
       },
     });
 
-    const modifiedInternForms = internStatuses.map((internStatus) => ({
-      id: internStatus.id,
-      label: `${internStatus.student.name} ${internStatus.student.last_name}`,
-      subtext: `${internStatus.student.school_number || ""}\n${formatDate(
-        internStatus.form.start_date
-      )} - ${formatDate(internStatus.form.end_date)}\n${
-        internStatus.form.company_info.name
-      }`,
-      translate: internStatus.status,
-    }));
+    const modifiedInternForms = internStatuses
+      .filter((internStatus) => internStatus.form)
+      .map((internStatus) => ({
+        id: internStatus.id,
+        label: `${internStatus.student.name} ${internStatus.student.last_name}`,
+        subtext: `${internStatus.student.school_number || ""}\n${formatDate(
+          internStatus.form.start_date
+        )} - ${formatDate(internStatus.form.end_date)}\n${
+          internStatus.form.company_info.name
+        }`,
+        translate: internStatus.status,
+      }));
 
     res.status(200).json({ data: modifiedInternForms || [] });
   } catch (error) {

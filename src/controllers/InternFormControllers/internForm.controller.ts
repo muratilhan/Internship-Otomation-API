@@ -19,8 +19,6 @@ export const getForms = async (req, res, next) => {
 
     const recordControl = releatedRecordQueryControl(userRole, userId);
 
-    console.log("red");
-
     // get sort
     let { sortedBy, sortedWay } = req.query;
 
@@ -43,7 +41,7 @@ export const getForms = async (req, res, next) => {
       name,
     } = req.query;
 
-    const users = await prisma.internForm.findMany({
+    const internForms = await prisma.internForm.findMany({
       take: Number(pageSize) || 10,
       skip: Number(page) * Number(pageSize) || undefined,
       select: {
@@ -87,7 +85,25 @@ export const getForms = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: users, dataLength: users.length });
+    const internFormCount = await prisma.internForm.count({
+      where: {
+        student: recordControl,
+        createdBy: createdBy,
+        AND: [
+          studentId ? { student: { id: { contains: studentId } } } : {},
+          name ? { student: { name: { contains: schoolNumber } } } : {},
+          schoolNumber
+            ? { student: { school_number: { contains: schoolNumber } } }
+            : {},
+          eduYearId ? { edu_year: { id: { equals: eduYearId * 1 } } } : {},
+          startDate ? { start_date: { gte: new Date(startDate) } } : {},
+          endDate ? { end_date: { lte: new Date(endDate) } } : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+        ],
+      },
+    });
+
+    res.status(200).json({ data: internForms, dataLength: internFormCount });
   } catch (e) {
     next(e);
   }
@@ -114,8 +130,6 @@ export const addForm = async (req, res, next) => {
     if (isDuplicateForm) {
       throw new BadRequestError(errorCodes.INTF_DUPLICATE_FORM);
     }
-
-    // TODO: calculate the totalWorkDay
 
     const isStudentWorkOnSaturday = weekDayWork.includes(6);
 
@@ -292,7 +306,6 @@ export const updateForm = async (req, res, next) => {
     const { studentId, startDate, endDate, eduYearId, isInTerm, weekDayWork } =
       req.body;
 
-    // TODO: calculate the totalWorkDay
     const isStudentWorkOnSaturday = weekDayWork.includes(6);
     const holidays = await prisma.holidays.findMany({ select: { date: true } });
 
@@ -381,7 +394,29 @@ export const deleteForm = async (req, res, next) => {
 
     await prisma.internForm.update({
       where: { id: internFormId },
-      data: { isDeleted: true },
+      data: {
+        isDeleted: true,
+        internStatus: {
+          update: {
+            isDeleted: true,
+            interview: {
+              update: {
+                isDeleted: true,
+                survey: {
+                  update: {
+                    isDeleted: true,
+                  },
+                },
+                confidentalReport: {
+                  update: {
+                    isDeleted: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     return res.status(200).json({ message: "Form deleted succesfully" });

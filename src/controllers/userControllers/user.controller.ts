@@ -1,6 +1,8 @@
 import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
 import * as bcrypt from "bcrypt";
+import { BadRequestError } from "../../errors/BadRequestError";
+import errorCodes from "../../enums/errorCodes";
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -23,7 +25,7 @@ export const getUsers = async (req, res, next) => {
 
     const users = await prisma.user.findMany({
       take: Number(pageSize) || 10,
-      skip: Number(page) * Number(pageSize) || undefined,
+      skip: Number(page) * Number(pageSize) || 0,
       select: {
         id: true,
         createdAt: true,
@@ -52,7 +54,26 @@ export const getUsers = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: users, dataLength: users.length });
+    const userCount = await prisma.user.count({
+      where: {
+        school_number: {
+          contains: schoolNumber,
+        },
+        isGraduate: {
+          equals: isGraduate,
+        },
+        user_type: userType,
+        name: {
+          contains: name,
+        },
+        last_name: {
+          contains: last_name,
+        },
+        createdBy: createdBy,
+      },
+    });
+
+    res.status(200).json({ data: users, dataLength: userCount });
   } catch (e) {
     next(e);
   }
@@ -88,6 +109,30 @@ export const addUser = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
   try {
+    const userId = req.params.userId;
+    const adminId = req.id;
+
+    const { name, lastName, userType, schoolNumber, tcNumber } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        name: name,
+        last_name: lastName,
+        updatedBy: {
+          connect: {
+            id: adminId,
+          },
+        },
+        user_type: userType,
+        school_number: schoolNumber,
+        tc_number: tcNumber,
+      },
+    });
+
+    return res.status(200).json({ message: "User updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -163,9 +208,69 @@ export const deleteUserById = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    const user = await prisma.user.delete({
+    const deletedRecord = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!deletedRecord) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    await prisma.interview.updateMany({
+      where: {
+        comission_id: userId,
+        student_id: userId,
+        createdById: userId,
+        updatedById: userId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    await prisma.internStatusTrack.deleteMany({
+      where: {
+        createdById: userId,
+      },
+    });
+
+    await prisma.internStatus.updateMany({
+      where: {
+        AND: [
+          {
+            createdById: userId,
+            updatedById: userId,
+            student_id: userId,
+          },
+        ],
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    await prisma.internForm.updateMany({
+      where: {
+        AND: [
+          {
+            student_id: userId,
+            createdById: userId,
+            updatedById: userId,
+            follow_up_id: userId,
+          },
+        ],
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    const user = await prisma.user.update({
       where: {
         id: userId,
+      },
+      data: {
+        isDeleted: true,
       },
     });
 

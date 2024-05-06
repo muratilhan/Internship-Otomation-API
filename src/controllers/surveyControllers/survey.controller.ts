@@ -1,49 +1,21 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
-
-export const addNewSurvey = async (req, res, next) => {
-  try {
-    const {
-      company_name,
-      company_address,
-      teach_type,
-      gano,
-      intern_group,
-      intern_type,
-      date,
-      answers,
-    } = req.body;
-    const userId = req.id;
-
-    const survey = await prisma.survey.create({
-      data: {
-        createdBy: {
-          connect: {
-            id: userId,
-          },
-        },
-        company_name: company_name,
-        company_address: company_address,
-        date: new Date("2024-03-25"),
-        answers: answers,
-        teach_type: teach_type,
-        gano: gano,
-        intern_group: intern_group,
-        intern_type: intern_type,
-      },
-    });
-
-    res.status(200).json({ message: "Survey added successfully", survey });
-  } catch (error) {
-    next(error);
-  }
-};
+import {
+  isSealedQueryCheck,
+  releatedRecordQueryControl,
+} from "../../handlers/query.handler";
 
 export const getAllSurveys = async (req, res, next) => {
   try {
     // get pagination
     const { pageSize, page } = req.query;
+
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
 
     // get sort
     let { sortedBy, sortedWay } = req.query;
@@ -56,19 +28,188 @@ export const getAllSurveys = async (req, res, next) => {
     }
 
     // get filter
-    const { eduYearId, studentId, comissionId, status } = req.query;
+    const { eduYearId, studentId, comissionId, status, isSealed } = req.query;
 
-    const surveys = await prisma.survey.findMany();
+    const surveys = await prisma.survey.findMany({
+      take: Number(pageSize) || 10,
+      skip: Number(page) * Number(pageSize) || undefined,
+      select: {
+        id: true,
+        createdAt: true,
+      },
+      orderBy: [{ [sortedBy]: sortedWay }],
+      where: {
+        interview: { student: recordControl },
+        // createdBy: createdBy,
+        AND: [
+          studentId
+            ? { interview: { student: { id: { equals: studentId } } } }
+            : {},
+          comissionId
+            ? { interview: { comission: { id: { equals: comissionId } } } }
+            : {},
+          eduYearId
+            ? {
+                interview: {
+                  internStatus: {
+                    form: { edu_year: { id: { equals: eduYearId * 1 } } },
+                  },
+                },
+              }
+            : {},
+          status
+            ? {
+                interview: {
+                  internStatus: {
+                    status: status,
+                  },
+                },
+              }
+            : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+        ],
+      },
+    });
 
-    res.status(200).json({ data: surveys, dataLenth: surveys.length });
+    const surveyCount = await prisma.survey.count({
+      where: {
+        interview: { student: recordControl },
+        // createdBy: createdBy,
+        AND: [
+          studentId
+            ? { interview: { student: { id: { equals: studentId } } } }
+            : {},
+          comissionId
+            ? { interview: { comission: { id: { equals: comissionId } } } }
+            : {},
+          eduYearId
+            ? {
+                interview: {
+                  internStatus: {
+                    form: { edu_year: { id: { equals: eduYearId * 1 } } },
+                  },
+                },
+              }
+            : {},
+          status
+            ? {
+                interview: {
+                  internStatus: {
+                    status: status,
+                  },
+                },
+              }
+            : {},
+          isSealed ? { isSealed: isSealed === "true" } : {},
+        ],
+      },
+    });
+
+    res.status(200).json({ data: surveys, dataLenth: surveyCount });
   } catch (e) {
     next(e);
+  }
+};
+
+export const getSingleSurvey = async (req, res, next) => {
+  try {
+    const surveyId = req.params.surveyId;
+
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
+
+    const selectUserTag = { select: { id: true, name: true, last_name: true } };
+
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId, interview: { student: recordControl } },
+      select: {
+        createdBy: selectUserTag,
+        company_name: true,
+        company_address: true,
+
+        teach_type: true,
+        gano: true,
+        intern_group: true,
+        intern_type: true,
+        updatedAt: true,
+        updatedBy: true,
+        date: true,
+        answers: true,
+      },
+    });
+
+    if (!survey) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    res.status(200).json({ data: survey });
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const addNewSurvey = async (req, res, next) => {
+  try {
+    const {
+      interviewId,
+      company_name,
+      company_address,
+      teach_type,
+      gano,
+      intern_group,
+      intern_type,
+      date,
+      answers,
+    } = req.body;
+
+    const userId = req.id;
+
+    const isDuplicateSurvey = await prisma.survey.findFirst({
+      where: {
+        interview: interviewId,
+        isSealed: false,
+      },
+    });
+
+    if (isDuplicateSurvey) {
+      throw new BadRequestError(errorCodes.SUR_DUPLICATE);
+    }
+
+    const survey = await prisma.survey.create({
+      data: {
+        createdBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        interview: {
+          connect: {
+            id: interviewId,
+          },
+        },
+        company_name: company_name,
+        company_address: company_address,
+        date: new Date(date),
+        answers: answers,
+        teach_type: teach_type,
+        gano: gano,
+        intern_group: intern_group,
+        intern_type: intern_type,
+      },
+    });
+
+    res.status(200).json({ message: "Survey added successfully" });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateSurvey = async (req, res, next) => {
   try {
     const surveyId = req.params.surveyId;
+
     const {
       company_name,
       company_address,
@@ -79,7 +220,19 @@ export const updateSurvey = async (req, res, next) => {
       date,
       answers,
     } = req.body;
-    console.log(req.body);
+
+    const userRole = req.roles;
+
+    const form = await prisma.survey.findUnique({
+      where: {
+        id: surveyId,
+      },
+    });
+
+    if (isSealedQueryCheck(userRole, form.isSealed)) {
+      throw new AuthorizationError(errorCodes.NOT_PERMISSION);
+    }
+
     const updatedSurvey = await prisma.survey.update({
       where: {
         id: surveyId,
@@ -87,7 +240,7 @@ export const updateSurvey = async (req, res, next) => {
       data: {
         company_name: company_name,
         company_address: company_address,
-        date: new Date("11/22/2020"),
+        date: new Date(date),
         answers: answers,
         teach_type: teach_type,
         gano: gano,
@@ -95,10 +248,8 @@ export const updateSurvey = async (req, res, next) => {
         intern_type: intern_type,
       },
     });
-    console.log(updateSurvey);
-    res
-      .status(200)
-      .json({ message: "survey has been updated succesfully", updatedSurvey });
+
+    res.status(200).json({ message: "survey has been updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -108,45 +259,57 @@ export const deleteSurvey = async (req, res, next) => {
   try {
     const surveyId = req.params.surveyId;
 
-    await prisma.survey.delete({ where: { id: surveyId } });
-    res.status(200).json({ message: "survey deleted succesfully" });
-  } catch (e) {
-    next(e);
-  }
-};
-
-export const deleteSurveys = async (req, res, next) => {
-  try {
-    await prisma.survey.deleteMany();
-    res.status(200).json({ message: "surveys deleted succesfully" });
-  } catch (e) {
-    next(e);
-  }
-};
-
-export const getSingleSurvey = async (req, res, next) => {
-  try {
-    const surveyId = req.params.surveyId;
-    const selectUserTag = { select: { id: true, name: true, last_name: true } };
-    const survey = await prisma.survey.findUnique({
+    const deletedRecord = await prisma.survey.findUnique({
       where: { id: surveyId },
-      select: {
-        createdBy: selectUserTag,
-        company_name: true,
-        company_address: true,
+    });
 
-        teach_type: true, // maybe Enum
-        gano: true, // maybe Enum
-        intern_group: true, // maybe Enum
-        intern_type: true, // maybe Enum
-        updatedAt: true,
-        updatedBy: true,
-        date: true,
-        answers: true,
+    if (!deletedRecord) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    await prisma.survey.update({
+      where: { id: surveyId },
+      data: {
+        isDeleted: true,
       },
     });
-    res.status(200).json(survey);
+
+    return res.status(200).json({ message: "survey deleted succesfully" });
   } catch (e) {
     next(e);
+  }
+};
+
+export const getCompanyInfoForSurvey = async (req, res, next) => {
+  try {
+    const { interviewId } = req.params;
+
+    const internStatus = await prisma.internStatus.findFirst({
+      where: {
+        interview: {
+          id: interviewId,
+        },
+      },
+      select: {
+        form: {
+          select: {
+            company_info: {
+              select: {
+                name: true,
+                address: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!internStatus) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    res.status(200).json({ data: internStatus });
+  } catch (error) {
+    next(error);
   }
 };
