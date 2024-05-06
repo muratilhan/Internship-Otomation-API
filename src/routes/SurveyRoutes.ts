@@ -2,8 +2,8 @@ import express from "express";
 import {
   addNewSurvey,
   deleteSurvey,
-  deleteSurveys,
   getAllSurveys,
+  getCompanyInfoForSurvey,
   getSingleSurvey,
   updateSurvey,
 } from "../controllers/surveyControllers/survey.controller";
@@ -17,9 +17,10 @@ SurveyRouter.get("/get/:surveyId", getSingleSurvey);
 SurveyRouter.put("/update/:surveyId", updateSurvey);
 
 SurveyRouter.delete("/delete/:surveyId", deleteSurvey);
-SurveyRouter.delete("/delete/", deleteSurveys);
 
 // Intern Status
 SurveyRouter.post("/add", addNewSurvey);
+
+SurveyRouter.get("/getCompanyInfo/:interviewId", getCompanyInfoForSurvey);
 
 export default SurveyRouter;

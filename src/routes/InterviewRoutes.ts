@@ -1,10 +1,12 @@
 import express from "express";
 import {
   addNewInterview,
+  getInterviewAC,
   getInterviewById,
   getInterviews,
   updateInterview,
 } from "../controllers/interviewControllers/interview.controller";
+import { sendCompanyConfidentalReportToken } from "../controllers/confidentalReportControllers/companyConfidental.controller";
 
 const InterviewRouter = express.Router();
 
@@ -19,6 +21,12 @@ InterviewRouter.put("/update/:interviewId", updateInterview);
 InterviewRouter.delete("/delete/:interviewId");
 
 // AC
-InterviewRouter.get("/autocomplete");
+InterviewRouter.get("/autocomplete", getInterviewAC);
+
+// Company Confidental Report
+InterviewRouter.post(
+  "/sendCompanyConfidental",
+  sendCompanyConfidentalReportToken
+);
 
 export default InterviewRouter;
