@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
     "build": "npm run generate",
-    "start": "npm run build && node src/index.ts"
+    "start": "npm run build && ts-node src/index.ts"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
