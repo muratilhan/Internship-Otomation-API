@@ -1,7 +1,7 @@
 process.env.NODE_ENV = process.env.NODE_ENV || "development";
 
 const env = process.env.NODE_ENV;
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 8080;
 
 let defaultConfig = {
   dbUrl: process.env.DATABASE_URL_DEV,
