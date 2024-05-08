@@ -1,4 +1,6 @@
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import { BadRequestError } from "../../errors/BadRequestError";
 
 export const getEduYears = async (req, res, next) => {
   try {
@@ -33,15 +35,52 @@ export const deleteEduYear = async (req, res, next) => {
   try {
     const { eduYearId } = req.params;
 
-    const deletedEduYear = await prisma.eduYear.delete({
-      where: eduYearId,
+    await prisma.$transaction(async (prisma) => {
+      // EduYear'ı sil
+
+      // EduYear'a bağlı olan formları ilişkilerini kes
+      await prisma.internForm.updateMany({
+        where: {
+          edu_year: {
+            id: eduYearId * 1,
+          },
+        },
+        data: {
+          edu_year_id: null,
+        },
+      });
+
+      const deletedEduYear = await prisma.eduYear.delete({
+        where: {
+          id: eduYearId * 1,
+        },
+      });
+
+      if (!deletedEduYear) {
+        throw new BadRequestError(errorCodes.NOT_FOUND);
+      }
     });
 
-    if (deletedEduYear) {
-      return res.status(200).json({ message: "succesfully deleted" });
-    }
+    // const deletedEduYear = await prisma.eduYear.delete({
+    //   where: {
+    //     id: eduYearId * 1,
+    //   },
+    // });
 
-    res.status(204);
+    // if (!deletedEduYear) {
+    //   return res.status(404).json({ message: "oops" });
+    // }
+
+    // await prisma.internForm.updateMany({
+    //   where: {
+    //     edu_year_id: eduYearId * 1,
+    //   },
+    //   data: {
+    //     edu_year_id: null,
+    //   },
+    // });
+
+    return res.status(200).json({ message: "succesfully deleted" });
   } catch (error) {
     next(error);
   }

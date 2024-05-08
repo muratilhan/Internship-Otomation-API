@@ -44,11 +44,11 @@ export const generatePasswordChangeToken = async (email, id) => {
 };
 
 export const generateCompanyConfidentalReportToken = async (
-  recordId,
+  interviewId,
   studentId
 ) => {
   const companyConfidentalReportToken = jwt.sign(
-    { id: recordId, studentId: studentId },
+    { id: interviewId, studentId: studentId },
     process.env.COMPANY_CONFIDENTAL_TOKEN,
     {
       expiresIn: "2d",

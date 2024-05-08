@@ -11,6 +11,7 @@ import corsOptions from "./config/corsOptions";
 
 import authRouter from "./routes/authRoutes";
 import protectedRouter from "./routes/protectedRoutes";
+import companyConfidentalReportRouter from "./routes/CompanyConfidentalReportRoutes";
 
 const app = express();
 
@@ -27,10 +28,8 @@ app.use(cookieParser());
 
 app.use("/auth", authRouter);
 app.use("/api", protect, protectedRouter);
-// app.get("/api", protect, verifyRoles(ROLES.STUDENT), (req, res) => {
-//   // this is a test req
-//   res.json({ message: "that's it JWT token now active" });
-// });
+// external endpoint
+app.use("/company", companyConfidentalReportRouter);
 
 app.use(errorHandler);
 

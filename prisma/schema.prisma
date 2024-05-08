@@ -115,8 +115,8 @@ model InternForm {
   end_date       DateTime
   total_work_day Int
 
-  edu_year    EduYear @relation("edu_year", fields: [edu_year_id], references: [id])
-  edu_year_id Int
+  edu_year    EduYear? @relation("edu_year", fields: [edu_year_id], references: [id])
+  edu_year_id Int?
 
   edu_program String @default("Bilgisayar Mühendisliği")
   edu_faculty String @default("Mühendislik Fakültesi")
@@ -179,7 +179,6 @@ model InternStatus {
   updatedById String?
 
   isDeleted Boolean @default(false)
-  isSealed  Boolean @default(false)
 
   student    User?   @relation("intern_status_student", fields: [student_id], references: [id])
   student_id String?
@@ -223,7 +222,6 @@ model Interview {
   updatedById String?
 
   isDeleted Boolean @default(false)
-  isSealed  Boolean @default(false)
 
   date DateTime
 

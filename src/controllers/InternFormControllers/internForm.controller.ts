@@ -3,7 +3,10 @@ import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
-import { calculateBussinesDates } from "../../handlers/dates.handler";
+import {
+  calculateBussinesDates,
+  isHoliday,
+} from "../../handlers/dates.handler";
 import {
   isSealedQueryCheck,
   releatedRecordQueryControl,
@@ -144,6 +147,12 @@ export const addForm = async (req, res, next) => {
 
     if (totalWorkDay > 60 || totalWorkDay < 1) {
       throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
+    }
+
+    console.log("ohhhhhhhh33", isHoliday(startDate, holidays));
+
+    if (isHoliday(startDate, holidays) || isHoliday(endDate, holidays)) {
+      console.log("ohhhhhhhh");
     }
 
     const adminUser = await prisma.user.findFirst({
@@ -386,37 +395,78 @@ export const deleteForm = async (req, res, next) => {
 
     const deletedRecord = await prisma.internForm.findUnique({
       where: { id: internFormId },
+      include: {
+        internStatus: {
+          include: {
+            interview: {
+              include: {
+                survey: true,
+                confidentalReport: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!deletedRecord) {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    await prisma.internForm.update({
-      where: { id: internFormId },
-      data: {
-        isDeleted: true,
-        internStatus: {
-          update: {
-            isDeleted: true,
-            interview: {
-              update: {
-                isDeleted: true,
-                survey: {
-                  update: {
-                    isDeleted: true,
-                  },
-                },
-                confidentalReport: {
-                  update: {
-                    isDeleted: true,
-                  },
-                },
-              },
-            },
-          },
+    const updateData: any = {
+      isDeleted: true,
+      isSealed: false,
+      internStatus: {
+        update: {
+          isDeleted: true,
         },
       },
+    };
+
+    if (deletedRecord.internStatus.interview) {
+      const updatedInterview = {
+        interview: {
+          update: {
+            isDeleted: true,
+          },
+        },
+      };
+      Object.assign(updatedInterview, updateData.internStatus.update);
+
+      if (deletedRecord.internStatus.interview.survey) {
+        const updatedSurvey = {
+          survey: {
+            update: {
+              isDeleted: true,
+              isSealed: false,
+            },
+          },
+        };
+        Object.assign(
+          updatedSurvey,
+          updateData.internStatus.update.interview.update
+        );
+      }
+
+      if (deletedRecord.internStatus.interview.confidentalReport) {
+        const updatedConfidentalReport = {
+          confidentalReport: {
+            update: {
+              isDeleted: true,
+              isSealed: false,
+            },
+          },
+        };
+        Object.assign(
+          updatedConfidentalReport,
+          updateData.internStatus.update.interview.update
+        );
+      }
+    }
+
+    await prisma.internForm.update({
+      where: { id: internFormId },
+      data: updateData,
     });
 
     return res.status(200).json({ message: "Form deleted succesfully" });

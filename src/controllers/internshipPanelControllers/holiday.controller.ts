@@ -29,14 +29,16 @@ export const deleteHoliday = async (req, res, next) => {
     const { holidayId } = req.params;
 
     const deletedHoliday = await prisma.holidays.delete({
-      where: holidayId,
+      where: {
+        id: holidayId * 1,
+      },
     });
 
-    if (deletedHoliday) {
-      return res.status(200).json({ message: "succesfully deleted" });
+    if (!deletedHoliday) {
+      return res.status(404).json({ message: "oops" });
     }
 
-    res.status(204);
+    return res.status(200).json({ message: "succesfully deleted" });
   } catch (error) {
     next(error);
   }

@@ -4,9 +4,11 @@ function calculateWeeklyWork(date, weekDayWork) {
   return weeklyWork.includes(day);
 }
 
-function isHoliday(date, holidays) {
+export function isHoliday(date, holidays) {
   // Tatil günleri listesi, ihtiyacınıza göre güncelleyebilirsiniz
-  return holidays.some((holiday) => holiday.getTime() === date.getTime());
+  return holidays.some(
+    (holiday) => new Date(holiday).getTime() === new Date(date).getTime()
+  );
 }
 
 export const calculateBussinesDates = (

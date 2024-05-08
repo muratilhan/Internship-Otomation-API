@@ -34,7 +34,6 @@ export const getInternStatuses = async (req, res, next) => {
       select: {
         id: true,
         status: true,
-        isSealed: true,
         form: {
           select: {
             id: true,

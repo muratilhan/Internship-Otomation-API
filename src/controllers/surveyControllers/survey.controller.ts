@@ -261,17 +261,27 @@ export const deleteSurvey = async (req, res, next) => {
 
     const deletedRecord = await prisma.survey.findUnique({
       where: { id: surveyId },
+      include: {
+        interview: true,
+      },
     });
 
     if (!deletedRecord) {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
+    const updateData = {
+      isDeleted: true,
+      isSealed: false,
+    };
+
+    if (deletedRecord?.interview?.id) {
+      Object.assign({ interview: null }, updateData);
+    }
+
     await prisma.survey.update({
       where: { id: surveyId },
-      data: {
-        isDeleted: true,
-      },
+      data: updateData,
     });
 
     return res.status(200).json({ message: "survey deleted succesfully" });

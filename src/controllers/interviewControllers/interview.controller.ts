@@ -168,7 +168,6 @@ export const getInterviewById = async (req, res, next) => {
         createdBy: selectUserTag,
         updatedAt: true,
         updatedBy: selectUserTag,
-        isSealed: true,
         date: true,
 
         student: {
@@ -215,6 +214,10 @@ export const addNewInterview = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
+    if (internStatus.interview_id) {
+      throw new BadRequestError(errorCodes.INV_DUPLICATE);
+    }
+
     const newInterview = await prisma.interview.create({
       data: {
         createdBy: {
@@ -244,7 +247,7 @@ export const addNewInterview = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "interview added succesfully" });
+    return res.status(200).json({ message: "interview added succesfully" });
   } catch (error) {
     next(error);
   }
@@ -290,27 +293,49 @@ export const deleteInterview = async (req, res, next) => {
 
     const deletedRecord = await prisma.interview.findUnique({
       where: { id: interviewId },
+      include: {
+        survey: true,
+        confidentalReport: true,
+        internStatus: true,
+      },
     });
 
     if (!deletedRecord) {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
+    const updateData = {
+      isDeleted: true,
+    };
+
+    if (deletedRecord?.internStatus?.id) {
+      Object.assign({ internStatus: null }, updateData);
+    }
+
+    if (deletedRecord?.survey?.id) {
+      Object.assign(
+        { survey: { update: { isDeleted: true, isSealed: false } } },
+        updateData
+      );
+    }
+
+    if (deletedRecord?.confidentalReport?.id) {
+      Object.assign(
+        {
+          confidentalReport: {
+            update: {
+              isDeleted: true,
+              isSealed: false,
+            },
+          },
+        },
+        updateData
+      );
+    }
+
     await prisma.interview.update({
       where: { id: interviewId },
-      data: {
-        isDeleted: true,
-        survey: {
-          update: {
-            isDeleted: true,
-          },
-        },
-        confidentalReport: {
-          update: {
-            isDeleted: true,
-          },
-        },
-      },
+      data: updateData,
     });
 
     return res.status(200).json({ message: "Interview deleted succesfully" });

@@ -24,8 +24,11 @@ const errorCodes = {
   CR_DUPLICATE_MAIL: "CR001",
 
   // Survey
-
   SUR_DUPLICATE: "SUR001",
+
+  // Interview
+
+  INV_DUPLICATE: "INV001",
 };
 
 export default errorCodes;

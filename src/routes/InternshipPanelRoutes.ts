@@ -10,20 +10,20 @@ import {
   getEduYears,
   getEduYearsAC,
 } from "../controllers/internshipPanelControllers/eduyear.controller";
+import {
+  getConfidentalMailList,
+  getInterviewReady,
+  startInterviews,
+} from "../controllers/internshipPanelControllers/internshipPanel.controller";
 
 const InternshipPanelRouter = express.Router();
 
-InternshipPanelRouter.post("/setConfig");
-
 // Internship Panel
-InternshipPanelRouter.post("/interviewStart");
+InternshipPanelRouter.post("/startInterviews", startInterviews);
 
-InternshipPanelRouter.get("/get/:interviewId");
+InternshipPanelRouter.get("/ConfidentalMailList/get", getConfidentalMailList);
 
-InternshipPanelRouter.get("/getConfidentalMailList");
-
-// TODO:interview
-InternshipPanelRouter.post("/sendConfidentalMail");
+InternshipPanelRouter.get("/InterviewReady/get", getInterviewReady);
 
 // Holiday
 InternshipPanelRouter.post("/holiday/add", addHoliday);

@@ -202,17 +202,27 @@ export const deleteConfidentalReport = async (req, res, next) => {
 
     const deletedRecord = await prisma.confidentalReport.findUnique({
       where: { id: confidentalReportId },
+      include: {
+        interview: true,
+      },
     });
 
     if (!deletedRecord) {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
+    const updateData = {
+      isDeleted: true,
+      isSealed: false,
+    };
+
+    if (deletedRecord?.interview?.id) {
+      Object.assign({ interview: null }, updateData);
+    }
+
     await prisma.survey.update({
       where: { id: confidentalReportId },
-      data: {
-        isDeleted: true,
-      },
+      data: updateData,
     });
     return res
       .status(200)

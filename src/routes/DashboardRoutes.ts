@@ -1,9 +1,17 @@
 import express from "express";
-
-import { getDashboardProfile } from "../controllers/dashboardControllers/dahboard.controller";
+import {
+  getFormsCount,
+  getInterviewsCount,
+  getStudentActiveInternship,
+} from "../controllers/dashboardControllers/dahboard.controller";
 
 const DashboardRouter = express.Router();
 
-DashboardRouter.get("/profile", getDashboardProfile);
+// TODO: dashboard services
+DashboardRouter.get("/interviewsCount", getInterviewsCount);
+
+DashboardRouter.get("/formsCount", getFormsCount);
+
+DashboardRouter.get("/studentActiveIntership", getStudentActiveInternship);
 
 export default DashboardRouter;
