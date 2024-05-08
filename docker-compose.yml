@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - BASE_URL=http://localhost:3001/
+      - CLIENT_URL=http://localhost:5173
+      - DATABASE_URL_PROD=postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public
+      - DATABASE_URL_DEV=postgres://otomasyon3_cprc_user:jKEQwQ4AUfid3uHnZvnBvkHcN2BrqkYO@dpg-cooim7qcn0vc738i8cng-a.frankfurt-postgres.render.com/otomasyon3_cprc
+      - ACCESS_TOKEN_SECRET=john
+      - REFRESH_TOKEN_SECRET=john2
+      - PASSWORD_REFRESH_TOKEN_SECRET=john3
+      - COMPANY_CONFIDENTAL_TOKEN=john4
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_USER=sefaonder111@gmail.com
+      - EMAIL_PASS=bqpy hzxv aysd uvnf
+      - EMAIL_SERVICE=Gmail
