@@ -7,6 +7,7 @@ import {
   getStudentAC,
   getUserById,
   getUsers,
+  updateUser,
 } from "../controllers/userControllers/user.controller";
 import { validateRequestSchema } from "../middlewares/validationHandler.middleware";
 import { addUserSchema } from "../validations/user/addUser.schema";
@@ -16,7 +17,7 @@ const UserRouter = express.Router();
 
 UserRouter.get("/get", getUsers);
 UserRouter.post("/add", addUserSchema, validateRequestSchema, addUser);
-UserRouter.put("/update/:userId", addUserSchema, validateRequestSchema);
+UserRouter.put("/update/:userId", updateUser);
 UserRouter.post(
   "/multipleadd",
   addMultipleUserSchema,

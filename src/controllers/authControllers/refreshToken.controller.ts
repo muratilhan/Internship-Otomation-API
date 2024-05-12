@@ -22,6 +22,8 @@ export const refreshToken = async (req, res, next) => {
       where: { refreshToken: { has: refreshToken } },
     });
 
+    let JwtError = false;
+
     console.log("foundUser--", foundUser);
     // Detected refresh token reuse
     if (!foundUser) {
@@ -30,7 +32,7 @@ export const refreshToken = async (req, res, next) => {
         process.env.REFRESH_TOKEN_SECRET,
         async (err, decoded) => {
           if (err) {
-            throw new AuthenticationError(errorCodes.NOT_VALID_REFRESH_TOKEN);
+            return (JwtError = true);
           }
 
           console.log("attemted the refresh token reuse");
@@ -81,7 +83,7 @@ export const refreshToken = async (req, res, next) => {
         }
         console.log("decoded", decoded);
         if (err || foundUser.id !== decoded.id) {
-          throw new AuthenticationError(errorCodes.NOT_VALID_REFRESH_TOKEN);
+          return (JwtError = true);
         }
 
         // refresh token was still valid
@@ -118,6 +120,10 @@ export const refreshToken = async (req, res, next) => {
         res.json({ roles, accessToken });
       }
     );
+
+    if (JwtError) {
+      throw new AuthenticationError(errorCodes.NOT_VALID_REFRESH_TOKEN);
+    }
   } catch (error) {
     next(error);
   }

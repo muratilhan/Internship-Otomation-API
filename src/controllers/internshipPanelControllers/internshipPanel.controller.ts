@@ -89,7 +89,7 @@ export const getConfidentalMailList = async (req, res, next) => {
   try {
     const confidentalReports = prisma.confidentalReport.findMany({
       where: {
-        isMailSended: true,
+        isMailResponded: true,
       },
     });
 

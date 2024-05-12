@@ -24,7 +24,7 @@ export const getAllConfidentalReports = async (req, res, next) => {
       eduYearId,
       studentId,
       companyName,
-      isMailSended,
+      isMailResponded,
       isSealed,
     } = req.query;
 
@@ -36,7 +36,7 @@ export const getAllConfidentalReports = async (req, res, next) => {
         createdAt: true,
         isSealed: true,
         company_name: true,
-        isMailSended: true,
+        isMailResponded: true,
         start_date: true,
         end_date: true,
         department: true,
@@ -59,7 +59,7 @@ export const getAllConfidentalReports = async (req, res, next) => {
               }
             : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
-          isMailSended ? { isSealed: isMailSended === "true" } : {},
+          isMailResponded ? { isSealed: isMailResponded === "true" } : {},
         ],
       },
     });
@@ -82,7 +82,7 @@ export const getAllConfidentalReports = async (req, res, next) => {
               }
             : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
-          isMailSended ? { isSealed: isMailSended === "true" } : {},
+          isMailResponded ? { isSealed: isMailResponded === "true" } : {},
         ],
       },
     });
@@ -211,16 +211,17 @@ export const deleteConfidentalReport = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    const updateData = {
+    let updateData = {
       isDeleted: true,
       isSealed: false,
     };
 
     if (deletedRecord?.interview?.id) {
-      Object.assign({ interview: null }, updateData);
+      const obj = { interview: { disconnect: true } };
+      updateData = Object.assign(obj, updateData);
     }
 
-    await prisma.survey.update({
+    await prisma.confidentalReport.update({
       where: { id: confidentalReportId },
       data: updateData,
     });
@@ -235,8 +236,66 @@ export const deleteConfidentalReport = async (req, res, next) => {
 export const getSingleConfidentalReport = async (req, res, next) => {
   try {
     const { confidentalReportId } = req.params;
+
+    const selectUserTag = { select: { id: true, name: true, last_name: true } };
+
     const confidentalReport = await prisma.confidentalReport.findUnique({
       where: { id: confidentalReportId },
+      select: {
+        id: true,
+        createdAt: true,
+        createdBy: selectUserTag,
+        updatedAt: true,
+        updatedBy: selectUserTag,
+
+        isMailResponded: true,
+
+        company_name: true,
+        address: true,
+        start_date: true,
+        end_date: true,
+
+        days_of_absence: true,
+        department: true,
+        is_edu_program: true,
+        intern_evaluation: true,
+        auth_name: true,
+        auth_position: true,
+        reg_number: true,
+        auth_tc_number: true,
+        auth_title: true,
+
+        interview: {
+          select: {
+            id: true,
+            student: {
+              select: {
+                id: true,
+                name: true,
+                last_name: true,
+                school_number: true,
+                tc_number: true,
+              },
+            },
+            date: true,
+            internStatus: {
+              select: {
+                form: {
+                  select: {
+                    edu_program: true,
+                    student_info: {
+                      select: {
+                        birth_date: true,
+                        birth_place: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     res
       .status(200)

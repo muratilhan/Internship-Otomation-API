@@ -22,6 +22,8 @@ const errorCodes = {
 
   // Confidental Report
   CR_DUPLICATE_MAIL: "CR001",
+  CR_MAIL_SENDED: "CR002",
+  CR_DUPLICATE_TOKEN: "CR003",
 
   // Survey
   SUR_DUPLICATE: "SUR001",

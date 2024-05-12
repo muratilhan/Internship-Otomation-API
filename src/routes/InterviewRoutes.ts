@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addNewInterview,
+  deleteInterview,
   getInterviewAC,
   getInterviewById,
   getInterviews,
@@ -18,7 +19,7 @@ InterviewRouter.post("/add", addNewInterview);
 
 InterviewRouter.put("/update/:interviewId", updateInterview);
 
-InterviewRouter.delete("/delete/:interviewId");
+InterviewRouter.delete("/delete/:interviewId", deleteInterview);
 
 // AC
 InterviewRouter.get("/autocomplete", getInterviewAC);

@@ -304,23 +304,26 @@ export const deleteInterview = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    const updateData = {
+    let updateData = {
       isDeleted: true,
     };
 
     if (deletedRecord?.internStatus?.id) {
-      Object.assign({ internStatus: null }, updateData);
+      updateData = Object.assign(
+        { internStatus: { disconnect: true } },
+        updateData
+      );
     }
 
     if (deletedRecord?.survey?.id) {
-      Object.assign(
+      updateData = Object.assign(
         { survey: { update: { isDeleted: true, isSealed: false } } },
         updateData
       );
     }
 
     if (deletedRecord?.confidentalReport?.id) {
-      Object.assign(
+      updateData = Object.assign(
         {
           confidentalReport: {
             update: {

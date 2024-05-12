@@ -82,7 +82,8 @@ export const getUsers = async (req, res, next) => {
 export const addUser = async (req, res, next) => {
   try {
     const adminId = req.id;
-    const { email, name, lastName, userType } = req.body;
+    const { email, name, lastName, userType, schoolNumber, tcNumber } =
+      req.body;
 
     const randomString = Math.random().toString(36).substring(2);
 
@@ -98,10 +99,13 @@ export const addUser = async (req, res, next) => {
           },
         },
         user_type: userType,
+        school_number: schoolNumber,
+        tc_number: tcNumber,
       },
     });
 
     res.status(200).json({ message: "User created succesfully" });
+    // send a password refresh mail link aka invite to system
   } catch (e) {
     next(e);
   }
@@ -112,7 +116,15 @@ export const updateUser = async (req, res, next) => {
     const userId = req.params.userId;
     const adminId = req.id;
 
-    const { name, lastName, userType, schoolNumber, tcNumber } = req.body;
+    const {
+      name,
+      lastName,
+      userType,
+      schoolNumber,
+      tcNumber,
+      isGraduate,
+      graduationDate,
+    } = req.body;
 
     const updatedUser = await prisma.user.update({
       where: {
@@ -129,6 +141,8 @@ export const updateUser = async (req, res, next) => {
         user_type: userType,
         school_number: schoolNumber,
         tc_number: tcNumber,
+        isGraduate: isGraduate,
+        graduationDate: graduationDate,
       },
     });
 

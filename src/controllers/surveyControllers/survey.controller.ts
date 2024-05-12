@@ -168,7 +168,7 @@ export const addNewSurvey = async (req, res, next) => {
 
     const isDuplicateSurvey = await prisma.survey.findFirst({
       where: {
-        interview: interviewId,
+        interview: { id: { equals: interviewId } },
         isSealed: false,
       },
     });
@@ -301,8 +301,26 @@ export const getCompanyInfoForSurvey = async (req, res, next) => {
         },
       },
       select: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+            school_number: true,
+            tc_number: true,
+          },
+        },
         form: {
           select: {
+            edu_program: true,
+            student_info: {
+              select: {
+                birth_date: true,
+                birth_place: true,
+              },
+            },
+            start_date: true,
+            end_date: true,
             company_info: {
               select: {
                 name: true,

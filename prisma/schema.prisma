@@ -59,7 +59,7 @@ model User {
   tc_number     String?
   school_number String?
 
-  isGraduate     Boolean?
+  isGraduate     Boolean   @default(false)
   graduationDate DateTime?
 
   refreshToken        String[]
@@ -239,7 +239,8 @@ model Interview {
   confidentalReport    ConfidentalReport? @relation(fields: [confidentalReport_id], references: [id])
   confidentalReport_id String?            @unique
 
-  companyAccesToken String @default("")
+  companyAccesToken   String  @default("")
+  isCompanyMailSended Boolean @default(false)
 }
 
 model Survey {
@@ -281,9 +282,9 @@ model ConfidentalReport {
   updatedBy   User?   @relation("UpdatedByRelation", fields: [updatedById], references: [id])
   updatedById String?
 
-  isDeleted    Boolean @default(false)
-  isMailSended Boolean @default(false)
-  isSealed     Boolean @default(false)
+  isDeleted       Boolean @default(false)
+  isMailResponded Boolean @default(false)
+  isSealed        Boolean @default(false)
 
   company_name String?
   address      String?
@@ -296,11 +297,12 @@ model ConfidentalReport {
 
   intern_evaluation Json?
 
-  auth_name      String?
-  auth_position  String?
-  reg_number     String?
-  auth_tc_number String?
-  auth_title     String?
+  auth_name      String? @db.VarChar(255)
+  auth_position  String? @db.VarChar(255)
+  reg_number     String? @db.VarChar(255)
+  auth_tc_number String? @db.VarChar(255)
+  auth_title     String? @db.VarChar(255)
+  desc           String?
 
   interview Interview?
 }
