@@ -19,6 +19,10 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
+    if (interview.isCompanyMailSended) {
+      throw new BadRequestError(errorCodes.CR_MAIL_SENDED);
+    }
+
     const confidental = await prisma.confidentalReport.findFirst({
       where: {
         interview: {
@@ -59,6 +63,16 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
       },
     });
 
+    await prisma.interview.update({
+      where: {
+        id: interviewId,
+      },
+      data: {
+        isCompanyMailSended: true,
+        companyAccesToken: confidentalReportToken,
+      },
+    });
+
     console.log("companyEmail", email);
 
     const link = `${process.env.CLIENT_URL}/company/confidential-report/${confidentalReportToken}`;
@@ -88,11 +102,17 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
       confidentalReportToken,
       process.env.COMPANY_CONFIDENTAL_TOKEN,
       (err, decoded) => {
-        if (err) return res.sendStatus(403); //invalid token
+        if (err) {
+          return (interviewId = null); //invalid token
+        }
         interviewId = decoded.id;
         studentId = decoded.studentId;
       }
     );
+
+    if (!interviewId) {
+      throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
+    }
 
     const interview = await prisma.interview.findUnique({
       where: {
@@ -100,6 +120,7 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
       },
       select: {
         id: true,
+        companyAccesToken: true,
 
         student: {
           select: {
@@ -117,9 +138,76 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    res.status(200).json({ data: interview });
+    console.log("accesToken", interview.companyAccesToken);
+    console.log("confidentalReportToken", confidentalReportToken);
 
-    // return the student data
+    if (interview.companyAccesToken !== confidentalReportToken) {
+      throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
+    }
+
+    const internStatus = await prisma.internStatus.findFirst({
+      where: {
+        interview: {
+          id: interview.id,
+        },
+      },
+      select: {
+        interview: {
+          select: {
+            id: true,
+            confidentalReport: {
+              select: {
+                id: true,
+                company_name: true,
+                address: true,
+                start_date: true,
+                end_date: true,
+                days_of_absence: true,
+                department: true,
+                is_edu_program: true,
+                intern_evaluation: true,
+                auth_name: true,
+                auth_position: true,
+                reg_number: true,
+                auth_tc_number: true,
+                auth_title: true,
+                desc: true,
+              },
+            },
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+            school_number: true,
+            tc_number: true,
+          },
+        },
+        form: {
+          select: {
+            edu_program: true,
+            student_info: {
+              select: {
+                birth_date: true,
+                birth_place: true,
+              },
+            },
+            start_date: true,
+            end_date: true,
+            company_info: {
+              select: {
+                name: true,
+                address: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ data: internStatus });
   } catch (error) {
     next(error);
   }
@@ -130,7 +218,6 @@ export const createCompanyConfidentalReport = async (req, res, next) => {
     // TODO: createCompanyConfidentalReport
     const {
       confidentalReportToken,
-      interviewId,
       company_name,
       address,
       start_date,
@@ -144,12 +231,39 @@ export const createCompanyConfidentalReport = async (req, res, next) => {
       reg_number,
       auth_tc_number,
       auth_title,
+      desc,
     } = req.body;
 
     // validate the token
 
+    let interviewId = null;
+    let studentId = null;
+
+    // verify the token
+
+    jwt.verify(
+      confidentalReportToken,
+      process.env.COMPANY_CONFIDENTAL_TOKEN,
+      (err, decoded) => {
+        if (err) {
+          return (interviewId = null); //invalid token
+        }
+        interviewId = decoded.id;
+        studentId = decoded.studentId;
+      }
+    );
+
+    if (!interviewId) {
+      throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
+    }
+
     const confidentalReport = await prisma.confidentalReport.create({
       data: {
+        interview: {
+          connect: {
+            id: interviewId,
+          },
+        },
         company_name: company_name,
         start_date: new Date(start_date),
         end_date: new Date(end_date),
@@ -163,11 +277,12 @@ export const createCompanyConfidentalReport = async (req, res, next) => {
         reg_number: reg_number,
         auth_tc_number: auth_tc_number,
         auth_title: auth_title,
+        desc: desc,
       },
     });
 
     res.status(200).json({
-      data: confidentalReport,
+      // data: confidentalReport,
       message: "confidentalReport added successfully",
     });
   } catch (error) {

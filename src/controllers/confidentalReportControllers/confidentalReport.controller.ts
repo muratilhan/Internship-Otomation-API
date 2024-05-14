@@ -264,6 +264,7 @@ export const getSingleConfidentalReport = async (req, res, next) => {
         reg_number: true,
         auth_tc_number: true,
         auth_title: true,
+        desc: true,
 
         interview: {
           select: {
