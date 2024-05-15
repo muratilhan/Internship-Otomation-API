@@ -3,8 +3,6 @@ import { PrismaClient } from "@prisma/client";
 const modelsWithIsDeleted = [
   "User",
   "InternForm",
-  "StudentInfo",
-  "CompanyInfo",
   "InternStatus",
   "Interview",
   "Survey",
