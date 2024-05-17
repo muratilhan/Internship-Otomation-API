@@ -19,7 +19,7 @@ export const generateAccesToken = async (id, email, roles) => {
       },
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15s" }
+    { expiresIn: "20m" }
   );
   return accessToken;
 };
