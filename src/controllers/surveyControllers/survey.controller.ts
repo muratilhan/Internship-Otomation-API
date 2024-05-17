@@ -28,7 +28,17 @@ export const getAllSurveys = async (req, res, next) => {
     }
 
     // get filter
-    const { eduYearId, studentId, comissionId, status, isSealed } = req.query;
+    const {
+      eduYearId,
+      studentId,
+      comissionId,
+      status,
+      isSealed,
+      date_gte,
+      date_lte,
+    } = req.query;
+
+    const selectUserTag = { select: { id: true, name: true, last_name: true } };
 
     const surveys = await prisma.survey.findMany({
       take: Number(pageSize) || 10,
@@ -36,11 +46,21 @@ export const getAllSurveys = async (req, res, next) => {
       select: {
         id: true,
         createdAt: true,
+        company_name: true,
+        date: true,
+        isSealed: true,
+        gano: true,
+        intern_type: true,
+        interview: {
+          select: {
+            student: selectUserTag,
+            comission: selectUserTag,
+          },
+        },
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
         interview: { student: recordControl },
-        // createdBy: createdBy,
         AND: [
           studentId
             ? { interview: { student: { id: { equals: studentId } } } }
@@ -67,6 +87,14 @@ export const getAllSurveys = async (req, res, next) => {
               }
             : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
+          date_gte || date_lte
+            ? {
+                date: {
+                  gte: date_gte ? new Date(date_gte) : undefined,
+                  lte: date_lte ? new Date(date_lte) : undefined,
+                },
+              }
+            : {},
         ],
       },
     });
@@ -74,7 +102,6 @@ export const getAllSurveys = async (req, res, next) => {
     const surveyCount = await prisma.survey.count({
       where: {
         interview: { student: recordControl },
-        // createdBy: createdBy,
         AND: [
           studentId
             ? { interview: { student: { id: { equals: studentId } } } }
@@ -101,11 +128,19 @@ export const getAllSurveys = async (req, res, next) => {
               }
             : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
+          date_gte || date_lte
+            ? {
+                date: {
+                  gte: date_gte ? new Date(date_gte) : undefined,
+                  lte: date_lte ? new Date(date_lte) : undefined,
+                },
+              }
+            : {},
         ],
       },
     });
 
-    res.status(200).json({ data: surveys, dataLenth: surveyCount });
+    res.status(200).json({ data: surveys, dataLength: surveyCount });
   } catch (e) {
     next(e);
   }
@@ -125,6 +160,7 @@ export const getSingleSurvey = async (req, res, next) => {
     const survey = await prisma.survey.findUnique({
       where: { id: surveyId, interview: { student: recordControl } },
       select: {
+        id: true,
         createdBy: selectUserTag,
         company_name: true,
         company_address: true,
@@ -137,6 +173,11 @@ export const getSingleSurvey = async (req, res, next) => {
         updatedBy: true,
         date: true,
         answers: true,
+        interview: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 

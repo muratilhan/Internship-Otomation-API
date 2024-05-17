@@ -28,22 +28,29 @@ export const getAllConfidentalReports = async (req, res, next) => {
       isSealed,
     } = req.query;
 
+    const selectUserTag = { select: { id: true, name: true, last_name: true } };
+
     const confidentalReports = await prisma.confidentalReport.findMany({
       take: Number(pageSize) || 10,
       skip: Number(page) * Number(pageSize) || undefined,
       select: {
         id: true,
         createdAt: true,
-        isSealed: true,
         company_name: true,
+        auth_name: true,
         isMailResponded: true,
         start_date: true,
         end_date: true,
         department: true,
+        interview: {
+          select: {
+            student: selectUserTag,
+            comission: selectUserTag,
+          },
+        },
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
-        createdBy: createdBy,
         AND: [
           studentId
             ? { interview: { student: { id: { contains: studentId } } } }
@@ -58,7 +65,6 @@ export const getAllConfidentalReports = async (req, res, next) => {
                 },
               }
             : {},
-          isSealed ? { isSealed: isSealed === "true" } : {},
           isMailResponded ? { isSealed: isMailResponded === "true" } : {},
         ],
       },
@@ -66,7 +72,6 @@ export const getAllConfidentalReports = async (req, res, next) => {
 
     const confidentalCount = await prisma.confidentalReport.count({
       where: {
-        createdBy: createdBy,
         AND: [
           studentId
             ? { interview: { student: { id: { contains: studentId } } } }
@@ -81,7 +86,6 @@ export const getAllConfidentalReports = async (req, res, next) => {
                 },
               }
             : {},
-          isSealed ? { isSealed: isSealed === "true" } : {},
           isMailResponded ? { isSealed: isMailResponded === "true" } : {},
         ],
       },

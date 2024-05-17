@@ -3,6 +3,8 @@ import prisma from "../../db";
 import * as bcrypt from "bcrypt";
 import { BadRequestError } from "../../errors/BadRequestError";
 import errorCodes from "../../enums/errorCodes";
+import { generatePasswordChangeToken } from "../../handlers/auth.handler";
+import { sendEmail } from "../../handlers/email.handler";
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -56,6 +58,7 @@ export const getUsers = async (req, res, next) => {
 
     const userCount = await prisma.user.count({
       where: {
+        isDeleted: false,
         school_number: {
           contains: schoolNumber,
         },
@@ -105,6 +108,19 @@ export const addUser = async (req, res, next) => {
     });
 
     res.status(200).json({ message: "User created succesfully" });
+
+    const passwordRefreshToken = await generatePasswordChangeToken(
+      newUser.email,
+      newUser.id
+    );
+
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: { passwordChangeToken: passwordRefreshToken },
+    });
+
+    const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
+    await sendEmail(newUser.email, "Şifre Oluşturma", link);
     // send a password refresh mail link aka invite to system
   } catch (e) {
     next(e);
@@ -209,6 +225,34 @@ export const getUserById = async (req, res, next) => {
         tc_number: true,
         isGraduate: true,
         graduationDate: true,
+
+        InternStatus: {
+          select: {
+            id: true,
+            status: true,
+            student: selectUserTag,
+            interview: {
+              select: {
+                comission: selectUserTag,
+              },
+            },
+            form: {
+              select: {
+                id: true,
+                follow_up: selectUserTag,
+                start_date: true,
+                total_work_day: true,
+                end_date: true,
+                company_info: {
+                  select: {
+                    name: true,
+                    service_area: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -230,17 +274,21 @@ export const deleteUserById = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    await prisma.interview.updateMany({
+    const interviews = await prisma.interview.updateMany({
       where: {
-        comission_id: userId,
-        student_id: userId,
-        createdById: userId,
-        updatedById: userId,
+        AND: [
+          { comission_id: userId },
+          {
+            student_id: userId,
+          },
+        ],
       },
       data: {
         isDeleted: true,
       },
     });
+
+    console.log("inter", interviews);
 
     await prisma.internStatusTrack.deleteMany({
       where: {
@@ -252,8 +300,6 @@ export const deleteUserById = async (req, res, next) => {
       where: {
         AND: [
           {
-            createdById: userId,
-            updatedById: userId,
             student_id: userId,
           },
         ],
@@ -268,8 +314,6 @@ export const deleteUserById = async (req, res, next) => {
         AND: [
           {
             student_id: userId,
-            createdById: userId,
-            updatedById: userId,
             follow_up_id: userId,
           },
         ],

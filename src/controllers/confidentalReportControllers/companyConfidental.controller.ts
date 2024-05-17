@@ -76,12 +76,10 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
     console.log("companyEmail", email);
 
     const link = `${process.env.CLIENT_URL}/company/confidential-report/${confidentalReportToken}`;
-    // await sendEmail(email, "Gizli Sicil Fişi", link);
+    await sendEmail(email.form.company_info.email, "Gizli Sicil Fişi", link);
     console.log("link", link);
 
-    res
-      .status(200)
-      .json({ message: "password reset link sent to your email account" });
+    res.status(200).json({ message: "password reset link sent to company" });
   } catch (error) {
     next(error);
   }

@@ -37,6 +37,13 @@ export const getInternStatuses = async (req, res, next) => {
         form: {
           select: {
             id: true,
+            start_date: true,
+            end_date: true,
+            edu_year: {
+              select: {
+                name: true,
+              },
+            },
             follow_up: {
               select: {
                 name: true,

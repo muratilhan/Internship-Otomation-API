@@ -25,8 +25,15 @@ export const getInterviews = async (req, res, next) => {
     const recordControl = releatedRecordQueryControl(userRole, userId);
 
     // get filter
-    const { createdBy, eduYearId, date, status, comissionId, studentId } =
-      req.query;
+    const {
+      createdBy,
+      eduYearId,
+      status,
+      comissionId,
+      studentId,
+      date_gte,
+      date_lte,
+    } = req.query;
 
     const selectUserTag = { select: { id: true, name: true, last_name: true } };
 
@@ -87,7 +94,14 @@ export const getInterviews = async (req, res, next) => {
               }
             : {},
 
-          date ? { date: date } : {},
+          date_gte || date_lte
+            ? {
+                date: {
+                  gte: date_gte ? new Date(date_gte) : undefined,
+                  lte: date_lte ? new Date(date_lte) : undefined,
+                },
+              }
+            : {},
         ],
       },
     });
@@ -135,7 +149,14 @@ export const getInterviews = async (req, res, next) => {
               }
             : {},
 
-          date ? { date: date } : {},
+          date_gte || date_lte
+            ? {
+                date: {
+                  gte: date_gte ? new Date(date_gte) : undefined,
+                  lte: date_lte ? new Date(date_lte) : undefined,
+                },
+              }
+            : {},
         ],
       },
     });

@@ -29,7 +29,7 @@ export const getForms = async (req, res, next) => {
       sortedBy = "createdAt";
     }
     if (!sortedWay) {
-      sortedWay = "asc";
+      sortedWay = "desc";
     }
 
     // get filter
@@ -37,8 +37,10 @@ export const getForms = async (req, res, next) => {
       createdBy,
       schoolNumber,
       eduYearId,
-      startDate,
-      endDate,
+      startDate_gte,
+      startDate_lte,
+      endDate_gte,
+      endDate_lte,
       isSealed,
       studentId,
       name,
@@ -53,7 +55,11 @@ export const getForms = async (req, res, next) => {
         start_date: true,
         isSealed: true,
         end_date: true,
-        edu_year: true,
+        edu_year: {
+          select: {
+            name: true,
+          },
+        },
         total_work_day: true,
         student: {
           select: {
@@ -81,8 +87,22 @@ export const getForms = async (req, res, next) => {
             ? { student: { school_number: { contains: schoolNumber } } }
             : {},
           eduYearId ? { edu_year: { id: { equals: eduYearId * 1 } } } : {},
-          startDate ? { start_date: { gte: new Date(startDate) } } : {},
-          endDate ? { end_date: { lte: new Date(endDate) } } : {},
+          startDate_gte || startDate_lte
+            ? {
+                start_date: {
+                  gte: startDate_gte ? new Date(startDate_gte) : undefined,
+                  lte: startDate_lte ? new Date(startDate_lte) : undefined,
+                },
+              }
+            : {},
+          endDate_lte || endDate_gte
+            ? {
+                end_date: {
+                  lte: endDate_lte ? new Date(endDate_lte) : undefined,
+                  gte: endDate_gte ? new Date(endDate_gte) : undefined,
+                },
+              }
+            : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
         ],
       },
@@ -99,8 +119,22 @@ export const getForms = async (req, res, next) => {
             ? { student: { school_number: { contains: schoolNumber } } }
             : {},
           eduYearId ? { edu_year: { id: { equals: eduYearId * 1 } } } : {},
-          startDate ? { start_date: { gte: new Date(startDate) } } : {},
-          endDate ? { end_date: { lte: new Date(endDate) } } : {},
+          startDate_gte || startDate_lte
+            ? {
+                start_date: {
+                  gte: startDate_gte ? new Date(startDate_gte) : undefined,
+                  lte: startDate_lte ? new Date(startDate_lte) : undefined,
+                },
+              }
+            : {},
+          endDate_lte || endDate_gte
+            ? {
+                end_date: {
+                  lte: endDate_lte ? new Date(endDate_lte) : undefined,
+                  gte: endDate_gte ? new Date(endDate_gte) : undefined,
+                },
+              }
+            : {},
           isSealed ? { isSealed: isSealed === "true" } : {},
         ],
       },
