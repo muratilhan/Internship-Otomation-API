@@ -540,3 +540,30 @@ export const getInternFormAC = async (req, res, next) => {
     next(error);
   }
 };
+
+export const unlockInternFormSeal = async (req, res, next) => {
+  try {
+    const { internFormId } = req.params;
+    const userId = req.id;
+
+    const internForm = await prisma.internForm.findUnique({
+      where: { id: internFormId },
+    });
+
+    const updatedForm = await prisma.internForm.update({
+      where: { id: internForm.id },
+      data: {
+        updatedBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        isSealed: internForm.isSealed ? false : true,
+      },
+    });
+
+    return res.status(200).json({ message: "Mühür güncellendi" });
+  } catch (error) {
+    next(error);
+  }
+};

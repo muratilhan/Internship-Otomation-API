@@ -173,6 +173,7 @@ export const getSingleSurvey = async (req, res, next) => {
         updatedBy: true,
         date: true,
         answers: true,
+        isSealed: true,
         interview: {
           select: {
             id: true,
@@ -378,6 +379,33 @@ export const getCompanyInfoForSurvey = async (req, res, next) => {
     }
 
     res.status(200).json({ data: internStatus });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unlockSurveySeal = async (req, res, next) => {
+  try {
+    const { surveyId } = req.params;
+    const userId = req.id;
+
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+    });
+
+    const updatedForm = await prisma.survey.update({
+      where: { id: survey.id },
+      data: {
+        updatedBy: {
+          connect: {
+            id: userId,
+          },
+        },
+        isSealed: survey.isSealed ? false : true,
+      },
+    });
+
+    return res.status(200).json({ message: "Mühür güncellendi" });
   } catch (error) {
     next(error);
   }

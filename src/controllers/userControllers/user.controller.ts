@@ -341,7 +341,7 @@ export const deleteUserById = async (req, res, next) => {
 export const getStudentAC = async (req, res, next) => {
   try {
     const students = await prisma.user.findMany({
-      where: { user_type: UserRoles.student },
+      where: { user_type: UserRoles.student, isGraduate: false },
       select: {
         name: true,
         last_name: true,

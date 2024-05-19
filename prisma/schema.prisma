@@ -239,8 +239,8 @@ model Interview {
   confidentalReport    ConfidentalReport? @relation(fields: [confidentalReport_id], references: [id])
   confidentalReport_id String?            @unique
 
-  companyAccesToken   String  @default("")
-  isCompanyMailSended Boolean @default(false)
+  companyAccesToken    String    @default("")
+  lastDateOfMailSended DateTime?
 }
 
 model Survey {

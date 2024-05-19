@@ -2,6 +2,7 @@ import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { generateCompanyConfidentalReportToken } from "../../handlers/auth.handler";
+import { isSameDay } from "../../handlers/dates.handler";
 import { sendEmail } from "../../handlers/email.handler";
 import jwt from "jsonwebtoken";
 
@@ -19,7 +20,7 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    if (interview.isCompanyMailSended) {
+    if (isSameDay(interview.lastDateOfMailSended, new Date())) {
       throw new BadRequestError(errorCodes.CR_MAIL_SENDED);
     }
 
@@ -68,7 +69,7 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
         id: interviewId,
       },
       data: {
-        isCompanyMailSended: true,
+        lastDateOfMailSended: new Date(),
         companyAccesToken: confidentalReportToken,
       },
     });

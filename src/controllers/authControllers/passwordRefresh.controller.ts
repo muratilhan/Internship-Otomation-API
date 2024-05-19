@@ -1,4 +1,6 @@
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import { BadRequestError } from "../../errors/BadRequestError";
 import {
   generatePasswordChangeToken,
   hashPassword,
@@ -11,8 +13,7 @@ export const sendPasswordRefresh = async (req, res, next) => {
     const { email } = req.body;
 
     const user = await prisma.user.findUnique({ where: { email: email } });
-    if (!user)
-      return res.status(400).send("user with given email doesn't exist");
+    if (!user) throw new BadRequestError(errorCodes.EMAIL_NOT_FOUND);
 
     const passwordRefreshToken = await generatePasswordChangeToken(
       user.email,
@@ -36,7 +37,6 @@ export const sendPasswordRefresh = async (req, res, next) => {
 
 export const changePassword = async (req, res, next) => {
   try {
-    // TODO: maybe later we will implement a 2nd password match :D
     const { password } = req.body;
 
     // extract userId from token
@@ -46,18 +46,18 @@ export const changePassword = async (req, res, next) => {
       req.params.token,
       process.env.PASSWORD_REFRESH_TOKEN_SECRET,
       (err, decoded) => {
-        if (err) return res.sendStatus(403); //invalid token
+        if (err) throw new BadRequestError(errorCodes.NOT_VALID_LINK);
         userId = decoded.id;
       }
     );
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(400).send("invalid link or expired");
+    if (!user) throw new BadRequestError(errorCodes.NOT_VALID_LINK);
 
     const token = await prisma.user.findFirst({
       where: { id: userId, passwordChangeToken: req.params.token },
     });
-    if (!token) return res.status(400).send("Invalid link or expired");
+    if (!token) throw new BadRequestError(errorCodes.NOT_VALID_LINK);
 
     await prisma.user.update({
       where: { id: user.id },

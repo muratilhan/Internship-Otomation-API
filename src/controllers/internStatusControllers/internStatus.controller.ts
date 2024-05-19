@@ -335,7 +335,7 @@ export const getInternStatusAC = async (req, res, next) => {
         subtext: `${internStatus.student.school_number || ""}\n${formatDate(
           internStatus.form.start_date
         )} - ${formatDate(internStatus.form.end_date)}\n${
-          internStatus.form.company_info.name
+          internStatus.form?.company_info?.name || ""
         }`,
         translate: internStatus.status,
       }));
