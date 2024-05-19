@@ -7,6 +7,7 @@ import {
   getFormById,
   getForms,
   getInternFormAC,
+  unlockInternFormSeal,
   updateForm,
 } from "../controllers/internFormControllers/internForm.controller";
 import {
@@ -35,5 +36,7 @@ InternFormRouter.put("/company-info/update/:companyInfoId", updateCompanyInfo);
 
 // AC
 InternFormRouter.get("/autocomplete", getInternFormAC);
+
+InternFormRouter.put("/unlock/:internFormId", unlockInternFormSeal);
 
 export default InternFormRouter;

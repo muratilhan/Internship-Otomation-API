@@ -5,6 +5,7 @@ import {
   getAllSurveys,
   getCompanyInfoForSurvey,
   getSingleSurvey,
+  unlockSurveySeal,
   updateSurvey,
 } from "../controllers/surveyControllers/survey.controller";
 
@@ -22,5 +23,7 @@ SurveyRouter.delete("/delete/:surveyId", deleteSurvey);
 SurveyRouter.post("/add", addNewSurvey);
 
 SurveyRouter.get("/getCompanyInfo/:interviewId", getCompanyInfoForSurvey);
+
+SurveyRouter.put("/unlock/:surveyId", unlockSurveySeal);
 
 export default SurveyRouter;
