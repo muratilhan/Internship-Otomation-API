@@ -20,7 +20,10 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    if (isSameDay(interview.lastDateOfMailSended, new Date())) {
+    const toDay = new Date();
+    const lastDateOfMailSended = interview.lastDateOfMailSended;
+
+    if (lastDateOfMailSended && isSameDay(lastDateOfMailSended, toDay)) {
       throw new BadRequestError(errorCodes.CR_MAIL_SENDED);
     }
 
