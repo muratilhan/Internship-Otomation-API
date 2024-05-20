@@ -208,6 +208,20 @@ export const getInterviewById = async (req, res, next) => {
             status: true,
           },
         },
+
+        survey: {
+          select: {
+            id: true,
+          },
+        },
+
+        confidentalReport: {
+          select: {
+            id: true,
+          },
+        },
+
+        lastDateOfMailSended: true,
       },
     });
 
@@ -388,6 +402,8 @@ export const getInterviewAC = async (req, res, next) => {
         student: selectStudentTag,
         comission: selectStudentTag,
         date: true,
+        survey_id: true,
+        confidentalReport_id: true,
         internStatus: {
           select: {
             status: true,
@@ -416,6 +432,8 @@ export const getInterviewAC = async (req, res, next) => {
         interview.comission.last_name
       }`,
       translate: interview.internStatus.status,
+      surveyId: interview.survey_id,
+      confidentalReportId: interview.confidentalReport_id,
     }));
 
     res.status(200).json({ data: modifiedInternForms || [] });

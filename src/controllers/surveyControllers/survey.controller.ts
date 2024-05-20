@@ -211,7 +211,6 @@ export const addNewSurvey = async (req, res, next) => {
     const isDuplicateSurvey = await prisma.survey.findFirst({
       where: {
         interview: { id: { equals: interviewId } },
-        isSealed: false,
       },
     });
 
@@ -312,13 +311,15 @@ export const deleteSurvey = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    const updateData = {
+    let updateData = {
       isDeleted: true,
-      isSealed: false,
     };
 
     if (deletedRecord?.interview?.id) {
-      Object.assign({ interview: null }, updateData);
+      updateData = Object.assign(
+        { interview: { disconnect: true } },
+        updateData
+      );
     }
 
     await prisma.survey.update({

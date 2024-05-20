@@ -302,6 +302,12 @@ export const getFormById = async (req, res, next) => {
           },
         },
 
+        internStatus: {
+          select: {
+            id: true,
+          },
+        },
+
         follow_up: selectUserTag,
 
         student_info: {
@@ -447,7 +453,7 @@ export const deleteForm = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    const updateData: any = {
+    let updateData: any = {
       isDeleted: true,
       isSealed: false,
       internStatus: {
@@ -465,7 +471,10 @@ export const deleteForm = async (req, res, next) => {
           },
         },
       };
-      Object.assign(updatedInterview, updateData.internStatus.update);
+      updateData = Object.assign(
+        updatedInterview,
+        updateData.internStatus.update
+      );
 
       if (deletedRecord.internStatus.interview.survey) {
         const updatedSurvey = {
@@ -476,7 +485,7 @@ export const deleteForm = async (req, res, next) => {
             },
           },
         };
-        Object.assign(
+        updateData = Object.assign(
           updatedSurvey,
           updateData.internStatus.update.interview.update
         );
@@ -491,7 +500,7 @@ export const deleteForm = async (req, res, next) => {
             },
           },
         };
-        Object.assign(
+        updateData = Object.assign(
           updatedConfidentalReport,
           updateData.internStatus.update.interview.update
         );

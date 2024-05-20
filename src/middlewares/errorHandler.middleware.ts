@@ -12,5 +12,7 @@ export const errorHandler: ErrorRequestHandler = (
     return res.status(error.StatusCode).json({ message: error.serialize() });
   }
 
-  return res.status(500).json({ message: "Beklenmeyen Bir hata oluştu" });
+  return res
+    .status(500)
+    .json({ message: { errorCode: "Beklenmeyen Bir hata oluştu" } });
 };

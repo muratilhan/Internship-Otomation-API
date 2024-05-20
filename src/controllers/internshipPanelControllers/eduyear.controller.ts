@@ -61,25 +61,6 @@ export const deleteEduYear = async (req, res, next) => {
       }
     });
 
-    // const deletedEduYear = await prisma.eduYear.delete({
-    //   where: {
-    //     id: eduYearId * 1,
-    //   },
-    // });
-
-    // if (!deletedEduYear) {
-    //   return res.status(404).json({ message: "oops" });
-    // }
-
-    // await prisma.internForm.updateMany({
-    //   where: {
-    //     edu_year_id: eduYearId * 1,
-    //   },
-    //   data: {
-    //     edu_year_id: null,
-    //   },
-    // });
-
     return res.status(200).json({ message: "succesfully deleted" });
   } catch (error) {
     next(error);
