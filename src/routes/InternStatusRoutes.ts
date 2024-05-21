@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  downloadExcelList,
   getInternStatusAC,
   getInternStatusById,
   getInternStatuses,
@@ -17,5 +18,7 @@ InternStatusRouter.put("/update/:internStatusId", updateInternStatus);
 
 // AC
 InternStatusRouter.get("/autocomplete", getInternStatusAC);
+
+InternStatusRouter.post("/download/excel", downloadExcelList);
 
 export default InternStatusRouter;

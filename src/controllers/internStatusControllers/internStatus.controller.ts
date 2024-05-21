@@ -1,9 +1,10 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
-import InternStatus from "../../enums/internStatus";
+import InternStatus, { InternStatusLabels } from "../../enums/internStatus";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { formatDate } from "../../handlers/dates.handler";
 import { releatedRecordQueryControl } from "../../handlers/query.handler";
+import ExcelJS from "exceljs";
 
 export const getInternStatuses = async (req, res, next) => {
   try {
@@ -341,6 +342,109 @@ export const getInternStatusAC = async (req, res, next) => {
       }));
 
     res.status(200).json({ data: modifiedInternForms || [] });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadExcelList = async (req, res, next) => {
+  try {
+    // 1. Prisma ile veritabanından verileri çek
+    const data = await prisma.internStatus.findMany({
+      select: {
+        id: true,
+        status: true,
+        form: {
+          select: {
+            id: true,
+            start_date: true,
+            end_date: true,
+            edu_year: {
+              select: {
+                name: true,
+              },
+            },
+            follow_up: {
+              select: {
+                name: true,
+                last_name: true,
+              },
+            },
+          },
+        },
+        interview: {
+          select: {
+            id: true,
+            comission: {
+              select: {
+                name: true,
+                last_name: true,
+              },
+            },
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+            school_number: true,
+            tc_number: true,
+          },
+        },
+      },
+    });
+
+    // 2. Yeni bir Excel çalışma kitabı oluştur
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("InternStatus");
+
+    // 3. Başlıkları ekle
+    worksheet.columns = [
+      { header: "Öğrenci", key: "student", width: 30 },
+      { header: "Form Yetkilisi", key: "followUp", width: 30 },
+      { header: "Mülakat Yetkilisi", key: "comission", width: 30 },
+      { header: "Staj Durumu", key: "status", width: 40 },
+      { header: "Staj Başlangıç Tarihi", key: "startDate", width: 30 },
+      { header: "Staj Bitiş Tarihi", key: "endDate", width: 30 },
+      { header: "Staj Dönemi", key: "eduYear", width: 30 },
+    ];
+
+    // 4. Verileri ekle
+    data.forEach((item) => {
+      worksheet.addRow({
+        student: item.student.name + " " + item.student.last_name,
+        followUp:
+          item.form.follow_up.name + " " + item.form.follow_up.last_name,
+        comission: item?.interview?.id
+          ? item.interview.comission.name +
+            " " +
+            item.interview.comission.last_name
+          : "",
+        status: InternStatusLabels[item.status].label,
+        startDate: new Date(item.form.start_date).toLocaleDateString("tr-TR"),
+        endDate: new Date(item.form.end_date).toLocaleDateString("tr-TR"),
+        eduYear: item.form.edu_year.name,
+      });
+    });
+
+    worksheet.columns.forEach((column) => {
+      if (column.key === "startDate" || column.key === "endDate") {
+        column.style = { numFmt: "DD.MM.YYYY" }; // Tarih formatı
+      }
+    });
+
+    worksheet.getRow(1).font = { bold: true, size: 15 };
+
+    // 5. Dosyayı kaydet
+    await workbook.xlsx.writeFile("data.xlsx");
+
+    res.download("data.xlsx", "data.xlsx", (err) => {
+      if (err) {
+        console.error("Error downloading the file:", err);
+        res.status(500).send("Error downloading the file");
+      }
+    });
   } catch (error) {
     next(error);
   }
