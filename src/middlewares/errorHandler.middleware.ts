@@ -7,7 +7,6 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("hebele", error.name, error.message);
   if (error instanceof CustomError) {
     return res.status(error.StatusCode).json({ message: error.serialize() });
   }
