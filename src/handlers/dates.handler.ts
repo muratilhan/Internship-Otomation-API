@@ -24,14 +24,14 @@ export const calculateBussinesDates = (
   while (currentDate <= finalDate) {
     if (
       calculateWeeklyWork(currentDate, weekDayWork) &&
-      !isHoliday(currentDate, holidays)
+      !isHoliday(currentDate, holidays) &&
+      !isOfficialHoliday(currentDate)
     ) {
       count++;
     }
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  console.log("count", count);
   return count;
 };
 
@@ -49,4 +49,23 @@ export const isSameDay = (date1, date2) => {
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate()
   );
+};
+
+export const isOfficialHoliday = (date) => {
+  const disabledDates = [
+    { month: 0, day: 1 }, // 1 Ocak (Ocak ayı 0-indexli olarak 0'dır)
+    { month: 3, day: 23 }, // 23 Nisan (Nisan ayı 0-indexli olarak 3'tür)
+    { month: 4, day: 1 }, // 1 Mayıs (Mayıs ayı 0-indexli olarak 4'tür)
+    { month: 4, day: 19 }, // 19 Mayıs (Mayıs ayı 0-indexli olarak 4'tür)
+    { month: 6, day: 15 }, // 15 Temmuz (Temmuz ayı 0-indexli olarak 6'dır)
+    { month: 7, day: 30 }, // 30 Ağustos (Ağustos ayı 0-indexli olarak 7'dir)
+    { month: 9, day: 29 }, // 29 Ekim (Ekim ayı 0-indexli olarak 9'dur)
+  ];
+
+  // Date objesinden ay ve gün bilgilerini al
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  // Ay ve gün bilgilerini kontrol et
+  return disabledDates.some((d) => day === d.day && month === d.month);
 };

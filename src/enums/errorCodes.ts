@@ -22,6 +22,7 @@ const errorCodes = {
   // InternForm
   INTF_TOTAL_DAY: "INTF001",
   INTF_DUPLICATE_FORM: "INTF002",
+  INTF_RES_DATE: "INTF003",
 
   // Confidental Report
   CR_DUPLICATE_MAIL: "CR001",

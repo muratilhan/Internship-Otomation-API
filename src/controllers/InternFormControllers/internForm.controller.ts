@@ -183,10 +183,8 @@ export const addForm = async (req, res, next) => {
       throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
     }
 
-    console.log("ohhhhhhhh33", isHoliday(startDate, holidays));
-
     if (isHoliday(startDate, holidays) || isHoliday(endDate, holidays)) {
-      console.log("ohhhhhhhh");
+      throw new BadRequestError(errorCodes.INTF_RES_DATE);
     }
 
     const adminUser = await prisma.user.findFirst({

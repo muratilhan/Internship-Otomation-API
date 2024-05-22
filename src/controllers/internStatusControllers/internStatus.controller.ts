@@ -247,13 +247,26 @@ export const updateInternStatus = async (req, res, next) => {
 
     const { status, desc } = req.body;
 
-    const form = await prisma.internStatus.findUnique({
+    const internStatus = await prisma.internStatus.findUnique({
       where: {
         id: internStatusId,
       },
+      select: {
+        id: true,
+        status: true,
+        interview: {
+          select: {
+            survey: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (!form) {
+    if (!internStatus) {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
@@ -265,16 +278,48 @@ export const updateInternStatus = async (req, res, next) => {
               id: userId,
             },
           },
-          prevStatus: form.status,
+          prevStatus: internStatus.status,
           nextStatus: status,
           desc: desc,
           internStatus: {
             connect: {
-              id: form.id,
+              id: internStatus.id,
             },
           },
         },
       });
+    }
+
+    let sealForm = {};
+    let sealSurvey = {};
+
+    if (internStatus.status === InternStatus.FRM01) {
+      sealForm = {
+        update: {
+          data: {
+            isSealed: true,
+          },
+        },
+      };
+    }
+
+    if (
+      internStatus.status === InternStatus.MLK01 &&
+      (status === InternStatus.MLK03 || status === InternStatus.MLK02)
+    ) {
+      if (internStatus?.interview?.survey?.id) {
+        sealSurvey = {
+          update: {
+            survey: {
+              update: {
+                data: {
+                  isSealed: true,
+                },
+              },
+            },
+          },
+        };
+      }
     }
 
     const updatedForm = await prisma.internStatus.update({
@@ -288,13 +333,8 @@ export const updateInternStatus = async (req, res, next) => {
           },
         },
         status: status,
-        form: {
-          update: {
-            data: {
-              isSealed: true,
-            },
-          },
-        },
+        form: sealForm,
+        interview: sealSurvey,
       },
     });
 
@@ -310,6 +350,11 @@ export const getInternStatusAC = async (req, res, next) => {
       select: { id: true, name: true, last_name: true, school_number: true },
     };
     const internStatuses = await prisma.internStatus.findMany({
+      where: {
+        status: {
+          equals: InternStatus.FRM03,
+        },
+      },
       select: {
         id: true,
         student: selectStudentTag,
