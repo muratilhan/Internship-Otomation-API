@@ -518,10 +518,18 @@ export const deleteForm = async (req, res, next) => {
 
 export const getInternFormAC = async (req, res, next) => {
   try {
+    const userId = req.id;
+    const userRole = req.roles;
+
+    const recordControl = releatedRecordQueryControl(userRole, userId);
+
     const selectStudentTag = {
       select: { id: true, name: true, last_name: true, school_number: true },
     };
     const internForms = await prisma.internForm.findMany({
+      where: {
+        student: recordControl,
+      },
       select: {
         id: true,
         student: selectStudentTag,

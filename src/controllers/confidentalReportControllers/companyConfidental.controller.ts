@@ -2,7 +2,7 @@ import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { generateCompanyConfidentalReportToken } from "../../handlers/auth.handler";
-import { isSameDay } from "../../handlers/dates.handler";
+import { formatDate, isSameDay } from "../../handlers/dates.handler";
 import { sendEmail } from "../../handlers/email.handler";
 import jwt from "jsonwebtoken";
 
@@ -57,9 +57,19 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
       select: {
         form: {
           select: {
+            start_date: true,
+            end_date: true,
+            student: {
+              select: {
+                name: true,
+                last_name: true,
+                school_number: true,
+              },
+            },
             company_info: {
               select: {
                 email: true,
+                name: true,
               },
             },
           },
@@ -80,7 +90,20 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
     console.log("companyEmail", email);
 
     const link = `${process.env.CLIENT_URL}/company/confidential-report/${confidentalReportToken}`;
-    await sendEmail(email.form.company_info.email, "Gizli Sicil Fişi", link);
+    await sendEmail(
+      email.form.company_info.email,
+      "Gizli Sicil Fişi",
+      "companyConfidental",
+      {
+        link: link,
+        startDate: formatDate(email.form.start_date),
+        endDate: formatDate(email.form.end_date),
+        name: email.form.student.name,
+        lastName: email.form.student.last_name,
+        schoolNumber: email.form.student.school_number,
+        companyName: email.form.company_info.name,
+      }
+    );
     console.log("link", link);
 
     res.status(200).json({ message: "password reset link sent to company" });

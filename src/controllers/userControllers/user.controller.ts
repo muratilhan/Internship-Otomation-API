@@ -5,6 +5,7 @@ import { BadRequestError } from "../../errors/BadRequestError";
 import errorCodes from "../../enums/errorCodes";
 import { generatePasswordChangeToken } from "../../handlers/auth.handler";
 import { sendEmail } from "../../handlers/email.handler";
+import { releatedRecordQueryControl } from "../../handlers/query.handler";
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -107,8 +108,6 @@ export const addUser = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "User created succesfully" });
-
     const passwordRefreshToken = await generatePasswordChangeToken(
       newUser.email,
       newUser.id
@@ -120,8 +119,13 @@ export const addUser = async (req, res, next) => {
     });
 
     const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    await sendEmail(newUser.email, "Şifre Oluşturma", link);
-    // send a password refresh mail link aka invite to system
+    await sendEmail(newUser.email, "Şifre Oluşturma", "signUp", {
+      link: link,
+      name: newUser.name,
+      lastName: newUser.last_name,
+    });
+
+    res.status(200).json({ message: "User created succesfully" });
   } catch (e) {
     next(e);
   }
@@ -332,8 +336,27 @@ export const deleteUserById = async (req, res, next) => {
 
 export const getStudentAC = async (req, res, next) => {
   try {
+    const userId = req.id;
+    const userRole = req.roles;
+
     const students = await prisma.user.findMany({
-      where: { user_type: UserRoles.student, isGraduate: false },
+      where: {
+        AND: [
+          {
+            user_type: UserRoles.student,
+          },
+          {
+            isGraduate: false,
+          },
+          userRole === UserRoles.student
+            ? {
+                id: {
+                  equals: userId,
+                },
+              }
+            : {},
+        ],
+      },
       select: {
         name: true,
         last_name: true,
@@ -341,6 +364,8 @@ export const getStudentAC = async (req, res, next) => {
         school_number: true,
       },
     });
+
+    console.log("students", students);
 
     const modifiedStudents = students.map((student) => ({
       id: student.id,

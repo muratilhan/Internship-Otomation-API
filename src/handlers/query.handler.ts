@@ -18,6 +18,6 @@ export const releatedRecordMutationCheck = (role, recordId, userId) => {
 
 export const releatedRecordQueryControl = (role, userId) => {
   if (role === UserRoles.student) {
-    return { id: { contains: userId } };
+    return { id: { equals: userId } };
   } else return {};
 };

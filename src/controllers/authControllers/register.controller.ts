@@ -54,7 +54,7 @@ export const newUser = async (req, res, next) => {
     });
 
     const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    await sendEmail(newUser.email, "Staj Otomasyonu Şifre Oluşturma", link);
+    // await sendEmail(newUser.email, "Staj Otomasyonu Şifre Oluşturma", link);
 
     res.status(200).json({ message: "User created succesfully" });
   } catch (err) {

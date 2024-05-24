@@ -26,7 +26,11 @@ export const sendPasswordRefresh = async (req, res, next) => {
     });
 
     const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    await sendEmail(user.email, "Password reset", link);
+    await sendEmail(user.email, "Şifre Yenileme", "passwordReset", {
+      link: link,
+      name: user.name,
+      lastName: user.last_name,
+    });
 
     res.send("password reset link sent to your email account");
   } catch (error) {
