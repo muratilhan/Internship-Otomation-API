@@ -224,7 +224,7 @@ model Interview {
 
   isDeleted Boolean @default(false)
 
-  date DateTime
+  date DateTime?
 
   student    User?   @relation("intern_student", fields: [student_id], references: [id])
   student_id String?
