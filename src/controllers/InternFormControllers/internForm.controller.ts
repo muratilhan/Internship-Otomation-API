@@ -187,11 +187,16 @@ export const addForm = async (req, res, next) => {
       throw new BadRequestError(errorCodes.INTF_RES_DATE);
     }
 
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        user_type: UserRoles.admin,
+    const adminUser = await prisma.activeFollowUp.findFirst({
+      select: {
+        id: true,
+        active_follow_up_id: true,
       },
     });
+
+    if (!adminUser) {
+      throw new BadRequestError(errorCodes.INTF_FOLLOW_UP);
+    }
 
     const newForm = await prisma.internForm.create({
       data: {
@@ -202,7 +207,7 @@ export const addForm = async (req, res, next) => {
         },
         follow_up: {
           connect: {
-            id: adminUser.id,
+            id: adminUser.active_follow_up_id,
           },
         },
         student: {

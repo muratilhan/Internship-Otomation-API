@@ -11,9 +11,12 @@ import {
   getEduYearsAC,
 } from "../controllers/internshipPanelControllers/eduyear.controller";
 import {
+  addNewActiveFollowUp,
+  getActiveFollowUp,
   getConfidentalMailList,
   getInterviewReady,
   startInterviews,
+  updateActiveFollowUp,
 } from "../controllers/internshipPanelControllers/internshipPanel.controller";
 
 const InternshipPanelRouter = express.Router();
@@ -40,5 +43,15 @@ InternshipPanelRouter.delete("/eduyear/delete/:eduYearId", deleteEduYear);
 InternshipPanelRouter.get("/eduyear/get", getEduYears);
 
 InternshipPanelRouter.get("/eduyear/autocomplete", getEduYearsAC);
+
+// Active Follow Up
+InternshipPanelRouter.get("/activeFollowUp/get", getActiveFollowUp);
+
+InternshipPanelRouter.post("/activeFollowUp/add", addNewActiveFollowUp);
+
+InternshipPanelRouter.put(
+  "/activeFollowUp/update/:activeFollowUpId",
+  updateActiveFollowUp
+);
 
 export default InternshipPanelRouter;

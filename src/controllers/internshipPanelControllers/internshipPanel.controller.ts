@@ -136,3 +136,79 @@ export const getInterviewReady = async (req, res, next) => {
     next(error);
   }
 };
+
+export const addNewActiveFollowUp = async (req, res, next) => {
+  try {
+    const { followUpId } = req.body;
+
+    const activeFollowUp = await prisma.activeFollowUp.findFirst();
+
+    if (activeFollowUp) {
+      throw new BadRequestError(errorCodes.INP_FOLLOW_UP_DUPLICATE);
+    }
+
+    const newRecord = await prisma.activeFollowUp.create({
+      data: {
+        active_follow_up: {
+          connect: {
+            id: followUpId,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({ message: "succesfully init" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getActiveFollowUp = async (req, res, next) => {
+  try {
+    const activeFollowUp = await prisma.activeFollowUp.findFirst({
+      select: {
+        id: true,
+        active_follow_up: {
+          select: {
+            id: true,
+            name: true,
+            last_name: true,
+            tc_number: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({ data: activeFollowUp });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateActiveFollowUp = async (req, res, next) => {
+  try {
+    const { activeFollowUpId } = req.params;
+    const { followUpId } = req.body;
+
+    const updateActiveFollowUp = await prisma.activeFollowUp.update({
+      where: {
+        id: activeFollowUpId * 1,
+      },
+      data: {
+        active_follow_up: {
+          connect: {
+            id: followUpId,
+          },
+        },
+      },
+    });
+
+    if (!updateActiveFollowUp) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    return res.status(200).json({ message: "record updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+};

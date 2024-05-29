@@ -17,12 +17,13 @@ const errorCodes = {
 
   // General
   NOT_FOUND: "GNR001",
-  UNEXPECTED: "00000",
+  UNEXPECTED: "00000", // 500
 
   // InternForm
   INTF_TOTAL_DAY: "INTF001",
   INTF_DUPLICATE_FORM: "INTF002",
   INTF_RES_DATE: "INTF003",
+  INTF_FOLLOW_UP: "INTF004",
 
   // Confidental Report
   CR_DUPLICATE_MAIL: "CR001",
@@ -35,6 +36,9 @@ const errorCodes = {
   // Interview
 
   INV_DUPLICATE: "INV001",
+
+  // InternShip Panel
+  INP_FOLLOW_UP_DUPLICATE: "INP001",
 };
 
 export default errorCodes;

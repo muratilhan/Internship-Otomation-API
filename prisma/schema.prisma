@@ -89,8 +89,9 @@ model User {
 
   InternStatusTrackCreated InternStatusTrack[] @relation("CreatedByRelation")
 
-  userCreatedBy User[] @relation("createdBy")
-  userUpdatedBy User[] @relation("updatedBy")
+  userCreatedBy  User[]           @relation("createdBy")
+  userUpdatedBy  User[]           @relation("updatedBy")
+  ActiveFollowUp ActiveFollowUp[] @relation("active_follow_up")
 }
 
 model InternForm {
@@ -310,10 +311,18 @@ model ConfidentalReport {
 model Holidays {
   id   Int      @id @default(autoincrement())
   date DateTime
+  desc String?
 }
 
 model EduYear {
   id         Int          @id @default(autoincrement())
   name       String
   internForm InternForm[] @relation("edu_year")
+}
+
+model ActiveFollowUp {
+  id Int @id @default(autoincrement())
+
+  active_follow_up    User?   @relation("active_follow_up", fields: [active_follow_up_id], references: [id])
+  active_follow_up_id String?
 }

@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 export const sendCompanyConfidentalReportToken = async (req, res, next) => {
   try {
     const { interviewId } = req.body;
+    const userId = req.id;
 
     const interview = await prisma.interview.findUnique({
       where: {
@@ -82,6 +83,7 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
         id: interviewId,
       },
       data: {
+        updatedBy: userId,
         lastDateOfMailSended: new Date(),
         companyAccesToken: confidentalReportToken,
       },

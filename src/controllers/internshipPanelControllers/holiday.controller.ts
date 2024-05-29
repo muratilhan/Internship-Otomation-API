@@ -12,10 +12,12 @@ export const getHolidays = async (req, res, next) => {
 
 export const addHoliday = async (req, res, next) => {
   try {
-    const { date } = req.body;
+    const { date, desc } = req.body;
+
     const holiday = await prisma.holidays.create({
       data: {
         date: new Date(date),
+        desc: desc,
       },
     });
     res.status(200).json({ message: "holiday created succesfully" });

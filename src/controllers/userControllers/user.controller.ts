@@ -44,7 +44,7 @@ export const getUsers = async (req, res, next) => {
           contains: schoolNumber,
         },
         isGraduate: {
-          equals: isGraduate,
+          equals: isGraduate === "true" ? true : false,
         },
         user_type: userType,
         name: {
@@ -64,7 +64,7 @@ export const getUsers = async (req, res, next) => {
           contains: schoolNumber,
         },
         isGraduate: {
-          equals: isGraduate,
+          equals: isGraduate === "true" ? true : false,
         },
         user_type: userType,
         name: {
