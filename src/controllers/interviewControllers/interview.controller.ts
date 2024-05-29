@@ -42,6 +42,7 @@ export const getInterviews = async (req, res, next) => {
       skip: Number(page) * Number(pageSize) || undefined,
       select: {
         id: true,
+        createdAt: true,
         date: true,
         student: selectUserTag,
         comission: selectUserTag,
