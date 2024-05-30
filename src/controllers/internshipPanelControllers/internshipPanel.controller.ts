@@ -5,9 +5,9 @@ import { BadRequestError } from "../../errors/BadRequestError";
 
 // TODO: internShip panel services
 function createManyInterviewAdapter(interview, userId) {
-  const { date, comissionId, internStatusId, student_id } = interview;
+  const { date, comissionId, student_id } = interview;
   return {
-    createdBy: {
+    updatedBy: {
       connect: {
         id: userId,
       },
@@ -15,11 +15,6 @@ function createManyInterviewAdapter(interview, userId) {
 
     date: new Date(date),
 
-    internStatus: {
-      connect: {
-        id: internStatusId,
-      },
-    },
     student: {
       connect: {
         id: student_id,
@@ -40,26 +35,22 @@ export const startInterviews = async (req, res, next) => {
 
     const interviews = req.body.interviews;
 
-    // const { date, comissionId, internStatusId } = interviews;
+    // const { date, comissionId, interviewId } = interviews;
 
     console.log("egeA", interviews);
 
     for (let index = 0; index < interviews.length; index++) {
-      const internStatus = await prisma.internStatus.findUnique({
-        where: { id: interviews[index].internStatusId },
+      const interview = await prisma.interview.findUnique({
+        where: { id: interviews[index].interviewId },
       });
 
-      if (!internStatus) {
+      if (!interview) {
         throw new BadRequestError(errorCodes.NOT_FOUND);
-      }
-
-      if (internStatus.interview_id) {
-        throw new BadRequestError(errorCodes.INV_DUPLICATE);
       }
 
       interviews[index] = {
         ...interviews[index],
-        student_id: internStatus.student_id,
+        student_id: interview.student_id,
       };
 
       const interviewCreate = createManyInterviewAdapter(
@@ -67,19 +58,51 @@ export const startInterviews = async (req, res, next) => {
         userId
       );
 
-      await prisma.interview.create({
+      await prisma.interview.update({
+        where: { id: interview.id },
         data: interviewCreate,
       });
 
-      await prisma.internStatus.update({
-        where: { id: interviews[index].internStatusId },
+      const releatedInternStatus = await prisma.internStatus.findUnique({
+        where: {
+          interview_id: interview.id,
+        },
+      });
+
+      const newInternStatusTrack = await prisma.internStatusTrack.create({
         data: {
-          status: InternStatus.MLK01,
+          createdBy: {
+            connect: {
+              id: userId,
+            },
+          },
+          prevStatus: releatedInternStatus.status,
+          nextStatus: InternStatus.MLK02,
+          desc: "",
+          internStatus: {
+            connect: {
+              id: releatedInternStatus.id,
+            },
+          },
+        },
+      });
+
+      await prisma.internStatus.update({
+        where: {
+          id: releatedInternStatus.id,
+        },
+        data: {
+          updatedBy: {
+            connect: {
+              id: userId,
+            },
+          },
+          status: InternStatus.MLK02,
         },
       });
     }
 
-    return res.status(200).json({ message: "interviews added succesfully" });
+    return res.status(200).json({ message: "interviews updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -101,14 +124,40 @@ export const getConfidentalMailList = async (req, res, next) => {
 
 export const getInterviewReady = async (req, res, next) => {
   try {
-    const internStatuses = await prisma.internStatus.findMany({
+    const interviews = await prisma.interview.findMany({
       where: {
-        status: InternStatus.FRM03,
+        internStatus: {
+          status: InternStatus.MLK01,
+        },
+        date: {
+          equals: null,
+        },
+
+        comission_id: {
+          equals: null,
+        },
       },
       select: {
         id: true,
         createdAt: true,
-        status: true,
+        internStatus: {
+          select: {
+            id: true,
+            status: true,
+            form: {
+              select: {
+                id: true,
+                start_date: true,
+                end_date: true,
+                edu_year: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         student: {
           select: {
             name: true,
@@ -116,22 +165,10 @@ export const getInterviewReady = async (req, res, next) => {
             school_number: true,
           },
         },
-        form: {
-          select: {
-            id: true,
-            start_date: true,
-            end_date: true,
-            edu_year: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
       },
     });
 
-    return res.status(200).json({ data: internStatuses });
+    return res.status(200).json({ data: interviews });
   } catch (error) {
     next(error);
   }
