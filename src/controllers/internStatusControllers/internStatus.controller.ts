@@ -471,11 +471,12 @@ export const downloadExcelList = async (req, res, next) => {
 
     // 2. Yeni bir Excel çalışma kitabı oluştur
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("InternStatus");
+    const worksheet = workbook.addWorksheet("StajDurumu");
 
     // 3. Başlıkları ekle
     worksheet.columns = [
       { header: "Öğrenci", key: "student", width: 30 },
+      { header: "Öğrenci Numarası", key: "schoolNumber", width: 30 },
       { header: "Form Yetkilisi", key: "followUp", width: 30 },
       { header: "Mülakat Yetkilisi", key: "comission", width: 30 },
       { header: "Staj Durumu", key: "status", width: 40 },
@@ -487,18 +488,20 @@ export const downloadExcelList = async (req, res, next) => {
     // 4. Verileri ekle
     data.forEach((item) => {
       worksheet.addRow({
-        student: item.student.name + " " + item.student.last_name,
+        student: item?.student?.name + " " + item?.student?.last_name,
+        schoolNumber: item?.student?.school_number,
         followUp:
-          item.form.follow_up.name + " " + item.form.follow_up.last_name,
-        comission: item?.interview?.id
-          ? item.interview.comission.name +
-            " " +
-            item.interview.comission.last_name
-          : "",
-        status: InternStatusLabels[item.status].label,
-        startDate: new Date(item.form.start_date).toLocaleDateString("tr-TR"),
-        endDate: new Date(item.form.end_date).toLocaleDateString("tr-TR"),
-        eduYear: item.form.edu_year.name,
+          item?.form?.follow_up?.name + " " + item?.form?.follow_up?.last_name,
+        comission:
+          item?.interview?.id && item.interview?.comission?.name
+            ? item.interview.comission.name +
+              " " +
+              item.interview?.comission?.last_name
+            : "",
+        status: InternStatusLabels[item?.status]?.label,
+        startDate: new Date(item?.form?.start_date).toLocaleDateString("tr-TR"),
+        endDate: new Date(item?.form?.end_date).toLocaleDateString("tr-TR"),
+        eduYear: item?.form?.edu_year?.name,
       });
     });
 
