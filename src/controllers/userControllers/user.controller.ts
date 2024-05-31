@@ -279,47 +279,6 @@ export const deleteUserById = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    await prisma.interview.updateMany({
-      where: {
-        AND: [
-          { comission_id: userId },
-          {
-            student_id: userId,
-          },
-        ],
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    await prisma.internStatus.updateMany({
-      where: {
-        AND: [
-          {
-            student_id: userId,
-          },
-        ],
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    await prisma.internForm.updateMany({
-      where: {
-        AND: [
-          { student_id: userId },
-          {
-            follow_up_id: userId,
-          },
-        ],
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
     const user = await prisma.user.update({
       where: {
         id: userId,
