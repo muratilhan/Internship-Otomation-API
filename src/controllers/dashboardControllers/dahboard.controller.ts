@@ -42,16 +42,28 @@ export const getStudentActiveInternship = async (req, res, next) => {
   try {
     const userId = req.id;
     const activeInternship = await prisma.internStatus.findFirst({
-      select: {
-        id: true,
-        status: true,
-      },
       where: {
         student_id: {
           equals: userId,
         },
       },
       orderBy: [{ createdAt: "desc" }],
+      select: {
+        id: true,
+        status: true,
+        form: {
+          select: {
+            start_date: true,
+            end_date: true,
+            edu_year: true,
+            company_info: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return res.status(200).json({ data: activeInternship });
