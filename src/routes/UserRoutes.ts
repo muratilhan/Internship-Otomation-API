@@ -3,6 +3,7 @@ import {
   addMultipleUser,
   addUser,
   deleteUserById,
+  downloadExcelListGraduated,
   getComissionAC,
   getStudentAC,
   getUserById,
@@ -30,5 +31,8 @@ UserRouter.delete("/delete/:userId", deleteUserById);
 // AC
 UserRouter.get("/autocomplete/student", getStudentAC);
 UserRouter.get("/autocomplete/comission", getComissionAC);
+
+// graduate Excel
+UserRouter.post("/download/excel", downloadExcelListGraduated);
 
 export default UserRouter;

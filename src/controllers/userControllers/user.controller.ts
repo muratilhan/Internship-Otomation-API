@@ -6,6 +6,7 @@ import errorCodes from "../../enums/errorCodes";
 import { generatePasswordChangeToken } from "../../handlers/auth.handler";
 import { sendEmail } from "../../handlers/email.handler";
 import { releatedRecordQueryControl } from "../../handlers/query.handler";
+import ExcelJS from "exceljs";
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -410,6 +411,77 @@ export const getComissionAC = async (req, res, next) => {
     }));
 
     res.status(200).json({ data: modifiedComissions || [] });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadExcelListGraduated = async (req, res, next) => {
+  try {
+    // 1. Prisma ile veritabanından verileri çek
+    const data = await prisma.user.findMany({
+      where: {
+        isGraduate: {
+          equals: true,
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        last_name: true,
+        user_type: true,
+        tc_number: true,
+        school_number: true,
+        graduationDate: true,
+      },
+    });
+
+    // 2. Yeni bir Excel çalışma kitabı oluştur
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("StajınıTamamlamışÖğrenciler");
+
+    // 3. Başlıkları ekle
+    worksheet.columns = [
+      { header: "Öğrenci Oluşturulma Tarihi", key: "createdAt", width: 40 },
+      { header: "Öğrenci İsim", key: "name", width: 30 },
+      { header: "Öğrenci Soyisim", key: "lastName", width: 30 },
+      { header: "Öğrenci Numarası", key: "schoolNumber", width: 30 },
+      { header: "T.C Kimlik Numarası", key: "tcNumber", width: 30 },
+      { header: "Staj Tamamlama Tarihi", key: "graduationDate", width: 30 },
+    ];
+
+    // 4. Verileri ekle
+    data.forEach((item) => {
+      worksheet.addRow({
+        createdAt: new Date(item?.createdAt).toLocaleDateString("tr-TR"),
+        schoolNumber: item?.school_number,
+        name: item?.name,
+        lastName: item?.last_name,
+        tcNumber: item?.tc_number,
+        graduationDate: new Date(item?.graduationDate).toLocaleDateString(
+          "tr-TR"
+        ),
+      });
+    });
+
+    worksheet.columns.forEach((column) => {
+      if (column.key === "graduationDate" || column.key === "createdAt") {
+        column.style = { numFmt: "DD.MM.YYYY" }; // Tarih formatı
+      }
+    });
+
+    worksheet.getRow(1).font = { bold: true, size: 15 };
+
+    // 5. Dosyayı kaydet
+    await workbook.xlsx.writeFile("user.xlsx");
+
+    res.download("user.xlsx", "user.xlsx", (err) => {
+      if (err) {
+        console.error("Error downloading the file:", err);
+        res.status(500).send("Error downloading the file");
+      }
+    });
   } catch (error) {
     next(error);
   }
