@@ -429,9 +429,9 @@ export const getInterviewAC = async (req, res, next) => {
       label: `${interview.student.name} ${interview.student.last_name} - ${
         interview.student.school_number || ""
       } `,
-      subtext: `${formatDate(interview.date)}\n ${interview.comission.name} - ${
-        interview.comission.last_name
-      }`,
+      subtext: `${formatDate(interview.date)}\n ${
+        interview?.comission?.name || ""
+      } - ${interview?.comission?.last_name || ""}`,
       translate: interview.internStatus.status,
       surveyId: interview.survey_id,
       confidentalReportId: interview.confidentalReport_id,

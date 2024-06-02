@@ -349,6 +349,24 @@ export const updateInternStatus = async (req, res, next) => {
       });
 
       newStatus = InternStatus.MLK01;
+
+      const newInternStatusTrack = await prisma.internStatusTrack.create({
+        data: {
+          createdBy: {
+            connect: {
+              id: userId,
+            },
+          },
+          prevStatus: status,
+          nextStatus: newStatus,
+          desc: optionalDesc,
+          internStatus: {
+            connect: {
+              id: internStatus.id,
+            },
+          },
+        },
+      });
     }
 
     const updatedInternStatus = await prisma.internStatus.update({
