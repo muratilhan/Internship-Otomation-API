@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { isSealedQueryCheck } from "../../handlers/query.handler";
 
@@ -57,7 +58,7 @@ export const updateStudentInfo = async (req, res, next) => {
     });
 
     if (isSealedQueryCheck(userRole, studentInfo.isSealed)) {
-      res.status(403).json({ message: "cant access the record" });
+      throw new AuthorizationError(errorCodes.NOT_PERMISSION);
     }
 
     await prisma.studentInfo.update({

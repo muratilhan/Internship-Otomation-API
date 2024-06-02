@@ -250,6 +250,7 @@ export const addNewSurvey = async (req, res, next) => {
 export const updateSurvey = async (req, res, next) => {
   try {
     const surveyId = req.params.surveyId;
+    const userId = req.id;
 
     const {
       company_name,
@@ -279,6 +280,11 @@ export const updateSurvey = async (req, res, next) => {
         id: surveyId,
       },
       data: {
+        updatedBy: {
+          connect: {
+            id: userId,
+          },
+        },
         company_name: company_name,
         company_address: company_address,
         date: new Date(date),

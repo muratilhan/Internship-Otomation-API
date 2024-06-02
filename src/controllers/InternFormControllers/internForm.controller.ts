@@ -358,75 +358,79 @@ export const updateForm = async (req, res, next) => {
     const { studentId, startDate, endDate, eduYearId, isInTerm, weekDayWork } =
       req.body;
 
-    const isStudentWorkOnSaturday = weekDayWork.includes(6);
-    const holidays = await prisma.holidays.findMany({ select: { date: true } });
+    await prisma.$transaction(async (prisma) => {
+      const isStudentWorkOnSaturday = weekDayWork.includes(6);
+      const holidays = await prisma.holidays.findMany({
+        select: { date: true },
+      });
 
-    const totalWorkDay = calculateBussinesDates(
-      startDate,
-      endDate,
-      holidays,
-      weekDayWork
-    );
+      const totalWorkDay = calculateBussinesDates(
+        startDate,
+        endDate,
+        holidays,
+        weekDayWork
+      );
 
-    if (totalWorkDay > 60 || totalWorkDay < 1) {
-      throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
-    }
+      if (totalWorkDay > 60 || totalWorkDay < 1) {
+        throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
+      }
 
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        user_type: UserRoles.admin,
-      },
+      const adminUser = await prisma.user.findFirst({
+        where: {
+          user_type: UserRoles.admin,
+        },
+      });
+
+      const form = await prisma.internForm.findUnique({
+        where: {
+          id: internFormId,
+        },
+      });
+
+      if (isSealedQueryCheck(userRole, form.isSealed)) {
+        throw new AuthorizationError(errorCodes.NOT_PERMISSION);
+      }
+
+      const updatedForm = await prisma.internForm.update({
+        where: {
+          id: internFormId,
+        },
+        data: {
+          updatedBy: {
+            connect: {
+              id: userId,
+            },
+          },
+          follow_up: {
+            connect: {
+              id: adminUser.id,
+            },
+          },
+          student: {
+            connect: {
+              id: studentId,
+            },
+          },
+
+          isInTerm: isInTerm,
+          weekDayWork: weekDayWork,
+          workOnSaturday: isStudentWorkOnSaturday,
+
+          total_work_day: totalWorkDay,
+          start_date: new Date(startDate),
+          end_date: new Date(endDate),
+          edu_year: {
+            connect: {
+              id: eduYearId,
+            },
+          },
+        },
+      });
+
+      res
+        .status(200)
+        .json({ data: updatedForm.id, message: "form updated succesfully" });
     });
-
-    const form = await prisma.internForm.findUnique({
-      where: {
-        id: internFormId,
-      },
-    });
-
-    if (isSealedQueryCheck(userRole, form.isSealed)) {
-      throw new AuthorizationError(errorCodes.NOT_PERMISSION);
-    }
-
-    const updatedForm = await prisma.internForm.update({
-      where: {
-        id: internFormId,
-      },
-      data: {
-        updatedBy: {
-          connect: {
-            id: userId,
-          },
-        },
-        follow_up: {
-          connect: {
-            id: adminUser.id,
-          },
-        },
-        student: {
-          connect: {
-            id: studentId,
-          },
-        },
-
-        isInTerm: isInTerm,
-        weekDayWork: weekDayWork,
-        workOnSaturday: isStudentWorkOnSaturday,
-
-        total_work_day: totalWorkDay,
-        start_date: new Date(startDate),
-        end_date: new Date(endDate),
-        edu_year: {
-          connect: {
-            id: eduYearId,
-          },
-        },
-      },
-    });
-
-    res
-      .status(200)
-      .json({ data: updatedForm.id, message: "form updated succesfully" });
   } catch (error) {
     next(error);
   }
@@ -436,86 +440,88 @@ export const deleteForm = async (req, res, next) => {
   try {
     const internFormId = req.params.internFormId;
 
-    const deletedRecord = await prisma.internForm.findUnique({
-      where: { id: internFormId },
-      include: {
-        internStatus: {
-          include: {
-            interview: {
-              include: {
-                survey: true,
-                confidentalReport: true,
+    await prisma.$transaction(async (prisma) => {
+      const deletedRecord = await prisma.internForm.findUnique({
+        where: { id: internFormId },
+        include: {
+          internStatus: {
+            include: {
+              interview: {
+                include: {
+                  survey: true,
+                  confidentalReport: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!deletedRecord) {
-      throw new BadRequestError(errorCodes.NOT_FOUND);
-    }
+      if (!deletedRecord) {
+        throw new BadRequestError(errorCodes.NOT_FOUND);
+      }
 
-    let updateData: any = {
-      isDeleted: true,
-      isSealed: false,
-      internStatus: {
-        update: {
-          isDeleted: true,
-        },
-      },
-    };
-
-    if (deletedRecord.internStatus.interview) {
-      const updatedInterview = {
-        interview: {
+      let updateData: any = {
+        isDeleted: true,
+        isSealed: false,
+        internStatus: {
           update: {
             isDeleted: true,
           },
         },
       };
-      updateData = Object.assign(
-        updatedInterview,
-        updateData.internStatus.update
-      );
 
-      if (deletedRecord.internStatus.interview.survey) {
-        const updatedSurvey = {
-          survey: {
+      if (deletedRecord.internStatus.interview) {
+        const updatedInterview = {
+          interview: {
             update: {
               isDeleted: true,
-              isSealed: false,
             },
           },
         };
         updateData = Object.assign(
-          updatedSurvey,
-          updateData.internStatus.update.interview.update
+          updatedInterview,
+          updateData.internStatus.update
         );
-      }
 
-      if (deletedRecord.internStatus.interview.confidentalReport) {
-        const updatedConfidentalReport = {
-          confidentalReport: {
-            update: {
-              isDeleted: true,
-              isSealed: false,
+        if (deletedRecord.internStatus.interview.survey) {
+          const updatedSurvey = {
+            survey: {
+              update: {
+                isDeleted: true,
+                isSealed: false,
+              },
             },
-          },
-        };
-        updateData = Object.assign(
-          updatedConfidentalReport,
-          updateData.internStatus.update.interview.update
-        );
-      }
-    }
+          };
+          updateData = Object.assign(
+            updatedSurvey,
+            updateData.internStatus.update.interview.update
+          );
+        }
 
-    await prisma.internForm.update({
-      where: { id: internFormId },
-      data: updateData,
+        if (deletedRecord.internStatus.interview.confidentalReport) {
+          const updatedConfidentalReport = {
+            confidentalReport: {
+              update: {
+                isDeleted: true,
+                isSealed: false,
+              },
+            },
+          };
+          updateData = Object.assign(
+            updatedConfidentalReport,
+            updateData.internStatus.update.interview.update
+          );
+        }
+      }
+
+      await prisma.internForm.update({
+        where: { id: internFormId },
+        data: updateData,
+      });
+
+      return res.status(200).json({ message: "Form deleted succesfully" });
     });
-
-    return res.status(200).json({ message: "Form deleted succesfully" });
   } catch (e) {
     next(e);
   }
@@ -566,23 +572,25 @@ export const unlockInternFormSeal = async (req, res, next) => {
     const { internFormId } = req.params;
     const userId = req.id;
 
-    const internForm = await prisma.internForm.findUnique({
-      where: { id: internFormId },
-    });
+    await prisma.$transaction(async (prisma) => {
+      const internForm = await prisma.internForm.findUnique({
+        where: { id: internFormId },
+      });
 
-    const updatedForm = await prisma.internForm.update({
-      where: { id: internForm.id },
-      data: {
-        updatedBy: {
-          connect: {
-            id: userId,
+      const updatedForm = await prisma.internForm.update({
+        where: { id: internForm.id },
+        data: {
+          updatedBy: {
+            connect: {
+              id: userId,
+            },
           },
+          isSealed: internForm.isSealed ? false : true,
         },
-        isSealed: internForm.isSealed ? false : true,
-      },
-    });
+      });
 
-    return res.status(200).json({ message: "Mühür güncellendi" });
+      return res.status(200).json({ message: "Mühür güncellendi" });
+    });
   } catch (error) {
     next(error);
   }

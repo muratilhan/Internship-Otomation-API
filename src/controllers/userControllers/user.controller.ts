@@ -5,7 +5,6 @@ import { BadRequestError } from "../../errors/BadRequestError";
 import errorCodes from "../../enums/errorCodes";
 import { generatePasswordChangeToken } from "../../handlers/auth.handler";
 import { sendEmail } from "../../handlers/email.handler";
-import { releatedRecordQueryControl } from "../../handlers/query.handler";
 import ExcelJS from "exceljs";
 
 export const getUsers = async (req, res, next) => {
@@ -24,7 +23,7 @@ export const getUsers = async (req, res, next) => {
     }
 
     // get filter
-    const { createdBy, schoolNumber, userType, name, last_name, isGraduate } =
+    const { createdBy, schoolNumber, userType, name, lastName, isGraduate } =
       req.query;
 
     const users = await prisma.user.findMany({
@@ -41,40 +40,69 @@ export const getUsers = async (req, res, next) => {
       },
       orderBy: [{ [sortedBy]: sortedWay }],
       where: {
-        school_number: {
-          contains: schoolNumber,
-        },
-        isGraduate: {
-          equals: isGraduate === "true" ? true : false,
-        },
-        user_type: userType,
-        name: {
-          contains: name,
-        },
-        last_name: {
-          contains: last_name,
-        },
-        createdBy: createdBy,
+        AND: [
+          schoolNumber
+            ? {
+                school_number: {
+                  contains: schoolNumber,
+                },
+              }
+            : {},
+          isGraduate
+            ? {
+                isGraduate: {
+                  equals: isGraduate === "true" ? true : false,
+                },
+              }
+            : {},
+          userType ? { user_type: userType } : {},
+          name
+            ? {
+                name: {
+                  contains: name,
+                },
+              }
+            : {},
+          lastName
+            ? {
+                last_name: { contains: lastName },
+              }
+            : {},
+        ],
       },
     });
 
     const userCount = await prisma.user.count({
       where: {
-        isDeleted: false,
-        school_number: {
-          contains: schoolNumber,
-        },
-        isGraduate: {
-          equals: isGraduate === "true" ? true : false,
-        },
-        user_type: userType,
-        name: {
-          contains: name,
-        },
-        last_name: {
-          contains: last_name,
-        },
-        createdBy: createdBy,
+        AND: [
+          schoolNumber
+            ? {
+                school_number: {
+                  contains: schoolNumber,
+                },
+              }
+            : {},
+          isGraduate
+            ? {
+                isGraduate: {
+                  equals: isGraduate === "true" ? true : false,
+                },
+              }
+            : {},
+          userType ? { user_type: userType } : {},
+          name
+            ? {
+                name: {
+                  contains: name,
+                },
+              }
+            : {},
+          lastName
+            ? {
+                last_name: { contains: lastName },
+              }
+            : {},
+        ],
       },
     });
 
@@ -90,43 +118,45 @@ export const addUser = async (req, res, next) => {
     const { email, name, lastName, userType, schoolNumber, tcNumber } =
       req.body;
 
-    const randomString = Math.random().toString(36).substring(2);
+    await prisma.$transaction(async (prisma) => {
+      const randomString = Math.random().toString(36).substring(2);
 
-    const newUser = await prisma.user.create({
-      data: {
-        email: email,
-        name: name,
-        last_name: lastName,
-        password: await bcrypt.hash(randomString, 10),
-        createdBy: {
-          connect: {
-            id: adminId,
+      const newUser = await prisma.user.create({
+        data: {
+          email: email,
+          name: name,
+          last_name: lastName,
+          password: await bcrypt.hash(randomString, 10),
+          createdBy: {
+            connect: {
+              id: adminId,
+            },
           },
+          user_type: userType,
+          school_number: schoolNumber,
+          tc_number: tcNumber,
         },
-        user_type: userType,
-        school_number: schoolNumber,
-        tc_number: tcNumber,
-      },
+      });
+
+      const passwordRefreshToken = await generatePasswordChangeToken(
+        newUser.email,
+        newUser.id
+      );
+
+      await prisma.user.update({
+        where: { id: newUser.id },
+        data: { passwordChangeToken: passwordRefreshToken },
+      });
+
+      const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
+      await sendEmail(newUser.email, "Şifre Oluşturma", "signUp", {
+        link: link,
+        name: newUser.name,
+        lastName: newUser.last_name,
+      });
+
+      res.status(200).json({ message: "User created succesfully" });
     });
-
-    const passwordRefreshToken = await generatePasswordChangeToken(
-      newUser.email,
-      newUser.id
-    );
-
-    await prisma.user.update({
-      where: { id: newUser.id },
-      data: { passwordChangeToken: passwordRefreshToken },
-    });
-
-    const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    await sendEmail(newUser.email, "Şifre Oluşturma", "signUp", {
-      link: link,
-      name: newUser.name,
-      lastName: newUser.last_name,
-    });
-
-    res.status(200).json({ message: "User created succesfully" });
   } catch (e) {
     next(e);
   }

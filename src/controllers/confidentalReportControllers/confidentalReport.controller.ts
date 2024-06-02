@@ -156,6 +156,8 @@ export const addNewConfidentalReport = async (req, res, next) => {
 export const updateConfidentalReport = async (req, res, next) => {
   try {
     const { confidentalReportId } = req.params;
+    const userId = req.id;
+
     const {
       company_name,
       address,
@@ -176,6 +178,11 @@ export const updateConfidentalReport = async (req, res, next) => {
         id: confidentalReportId,
       },
       data: {
+        updatedBy: {
+          connect: {
+            id: userId,
+          },
+        },
         company_name: company_name,
         start_date: new Date(start_date),
         end_date: new Date(end_date),
@@ -204,34 +211,37 @@ export const deleteConfidentalReport = async (req, res, next) => {
   try {
     const confidentalReportId = req.params.confidentalReportId;
 
-    const deletedRecord = await prisma.confidentalReport.findUnique({
-      where: { id: confidentalReportId },
-      include: {
-        interview: true,
-      },
+    await prisma.$transaction(async (prisma) => {
+      const deletedRecord = await prisma.confidentalReport.findUnique({
+        where: { id: confidentalReportId },
+        include: {
+          interview: true,
+        },
+      });
+
+      if (!deletedRecord) {
+        throw new BadRequestError(errorCodes.NOT_FOUND);
+      }
+
+      let updateData = {
+        isDeleted: true,
+        isSealed: false,
+      };
+
+      if (deletedRecord?.interview?.id) {
+        const obj = { interview: { disconnect: true } };
+        updateData = Object.assign(obj, updateData);
+      }
+
+      await prisma.confidentalReport.update({
+        where: { id: confidentalReportId },
+        data: updateData,
+      });
+
+      return res
+        .status(200)
+        .json({ message: "confidentalReport deleted succesfully" });
     });
-
-    if (!deletedRecord) {
-      throw new BadRequestError(errorCodes.NOT_FOUND);
-    }
-
-    let updateData = {
-      isDeleted: true,
-      isSealed: false,
-    };
-
-    if (deletedRecord?.interview?.id) {
-      const obj = { interview: { disconnect: true } };
-      updateData = Object.assign(obj, updateData);
-    }
-
-    await prisma.confidentalReport.update({
-      where: { id: confidentalReportId },
-      data: updateData,
-    });
-    return res
-      .status(200)
-      .json({ message: "confidentalReport deleted succesfully" });
   } catch (e) {
     next(e);
   }

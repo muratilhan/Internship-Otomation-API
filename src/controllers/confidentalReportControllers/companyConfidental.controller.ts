@@ -11,104 +11,119 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
     const { interviewId } = req.body;
     const userId = req.id;
 
-    const interview = await prisma.interview.findUnique({
-      where: {
-        id: interviewId,
-      },
-    });
-
-    if (!interview) {
-      throw new BadRequestError(errorCodes.NOT_FOUND);
-    }
-
-    const toDay = new Date();
-    const lastDateOfMailSended = interview.lastDateOfMailSended;
-
-    if (lastDateOfMailSended && isSameDay(lastDateOfMailSended, toDay)) {
-      throw new BadRequestError(errorCodes.CR_MAIL_SENDED);
-    }
-
-    const confidental = await prisma.confidentalReport.findFirst({
-      where: {
-        interview: {
-          id: {
-            equals: interviewId,
+    await prisma.$transaction(
+      async (prisma) => {
+        const interview = await prisma.interview.findUnique({
+          where: {
+            id: interviewId,
           },
-        },
-      },
-    });
+        });
 
-    if (confidental) {
-      throw new BadRequestError(errorCodes.CR_DUPLICATE_MAIL);
-    }
+        if (!interview) {
+          throw new BadRequestError(errorCodes.NOT_FOUND);
+        }
 
-    const confidentalReportToken = await generateCompanyConfidentalReportToken(
-      interview.id,
-      interview.student_id
-    );
+        const toDay = new Date();
+        const lastDateOfMailSended = interview.lastDateOfMailSended;
 
-    const email = await prisma.internStatus.findFirst({
-      where: {
-        interview: {
-          id: {
-            contains: interview.id,
+        if (lastDateOfMailSended && isSameDay(lastDateOfMailSended, toDay)) {
+          throw new BadRequestError(errorCodes.CR_MAIL_SENDED);
+        }
+
+        const confidental = await prisma.confidentalReport.findFirst({
+          where: {
+            interview: {
+              id: {
+                equals: interviewId,
+              },
+            },
           },
-        },
-      },
-      select: {
-        form: {
+        });
+
+        if (confidental) {
+          throw new BadRequestError(errorCodes.CR_DUPLICATE_MAIL);
+        }
+
+        const confidentalReportToken =
+          await generateCompanyConfidentalReportToken(
+            interview.id,
+            interview.student_id
+          );
+
+        const email = await prisma.internStatus.findFirst({
+          where: {
+            interview: {
+              id: {
+                contains: interview.id,
+              },
+            },
+          },
           select: {
-            start_date: true,
-            end_date: true,
-            student: {
+            form: {
               select: {
-                name: true,
-                last_name: true,
-                school_number: true,
-              },
-            },
-            company_info: {
-              select: {
-                email: true,
-                name: true,
+                start_date: true,
+                end_date: true,
+                student: {
+                  select: {
+                    name: true,
+                    last_name: true,
+                    school_number: true,
+                  },
+                },
+                company_info: {
+                  select: {
+                    email: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
+        });
 
-    await prisma.interview.update({
-      where: {
-        id: interviewId,
-      },
-      data: {
-        updatedBy: userId,
-        lastDateOfMailSended: new Date(),
-        companyAccesToken: confidentalReportToken,
-      },
-    });
+        await prisma.interview.update({
+          where: {
+            id: interviewId,
+          },
+          data: {
+            updatedBy: {
+              connect: {
+                id: userId,
+              },
+            },
+            lastDateOfMailSended: new Date(),
+            companyAccesToken: confidentalReportToken,
+          },
+        });
 
-    console.log("companyEmail", email);
+        console.log("companyEmail", email);
 
-    const link = `${process.env.CLIENT_URL}/company/confidential-report/${confidentalReportToken}`;
-    await sendEmail(
-      email.form.company_info.email,
-      "Gizli Sicil Fişi",
-      "companyConfidental",
+        const link = `${process.env.CLIENT_URL}/company/confidential-report/${confidentalReportToken}`;
+        await sendEmail(
+          email.form.company_info.email,
+          "Gizli Sicil Fişi",
+          "companyConfidental",
+          {
+            link: link,
+            startDate: formatDate(email.form.start_date),
+            endDate: formatDate(email.form.end_date),
+            name: email.form.student.name,
+            lastName: email.form.student.last_name,
+            schoolNumber: email.form.student.school_number,
+            companyName: email.form.company_info.name,
+          }
+        );
+        console.log("link", link);
+
+        res
+          .status(200)
+          .json({ message: "password reset link sent to company" });
+      },
       {
-        link: link,
-        startDate: formatDate(email.form.start_date),
-        endDate: formatDate(email.form.end_date),
-        name: email.form.student.name,
-        lastName: email.form.student.last_name,
-        schoolNumber: email.form.student.school_number,
-        companyName: email.form.company_info.name,
+        maxWait: 50000, // default: 2000
+        timeout: 100000, // default: 5000
       }
     );
-    console.log("link", link);
-
-    res.status(200).json({ message: "password reset link sent to company" });
   } catch (error) {
     next(error);
   }
@@ -123,118 +138,126 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
     let interviewId = null;
     let studentId = null;
 
-    // verify the token
+    await prisma.$transaction(
+      async (prisma) => {
+        // verify the token
 
-    jwt.verify(
-      confidentalReportToken,
-      process.env.COMPANY_CONFIDENTAL_TOKEN,
-      (err, decoded) => {
-        if (err) {
-          return (interviewId = null); //invalid token
+        jwt.verify(
+          confidentalReportToken,
+          process.env.COMPANY_CONFIDENTAL_TOKEN,
+          (err, decoded) => {
+            if (err) {
+              return (interviewId = null); //invalid token
+            }
+            interviewId = decoded.id;
+            studentId = decoded.studentId;
+          }
+        );
+
+        if (!interviewId) {
+          throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
         }
-        interviewId = decoded.id;
-        studentId = decoded.studentId;
-      }
-    );
 
-    if (!interviewId) {
-      throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
-    }
-
-    const interview = await prisma.interview.findUnique({
-      where: {
-        id: interviewId,
-      },
-      select: {
-        id: true,
-        companyAccesToken: true,
-
-        student: {
-          select: {
-            id: true,
-            name: true,
-            last_name: true,
-            school_number: true,
-            tc_number: true,
+        const interview = await prisma.interview.findUnique({
+          where: {
+            id: interviewId,
           },
-        },
-      },
-    });
-
-    if (!interview) {
-      throw new BadRequestError(errorCodes.NOT_FOUND);
-    }
-
-    console.log("accesToken", interview.companyAccesToken);
-    console.log("confidentalReportToken", confidentalReportToken);
-
-    if (interview.companyAccesToken !== confidentalReportToken) {
-      throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
-    }
-
-    const internStatus = await prisma.internStatus.findFirst({
-      where: {
-        interview: {
-          id: interview.id,
-        },
-      },
-      select: {
-        interview: {
           select: {
             id: true,
-            confidentalReport: {
+            companyAccesToken: true,
+
+            student: {
               select: {
                 id: true,
-                company_name: true,
-                address: true,
+                name: true,
+                last_name: true,
+                school_number: true,
+                tc_number: true,
+              },
+            },
+          },
+        });
+
+        if (!interview) {
+          throw new BadRequestError(errorCodes.NOT_FOUND);
+        }
+
+        console.log("accesToken", interview.companyAccesToken);
+        console.log("confidentalReportToken", confidentalReportToken);
+
+        if (interview.companyAccesToken !== confidentalReportToken) {
+          throw new BadRequestError(errorCodes.CR_DUPLICATE_TOKEN);
+        }
+
+        const internStatus = await prisma.internStatus.findFirst({
+          where: {
+            interview: {
+              id: interview.id,
+            },
+          },
+          select: {
+            interview: {
+              select: {
+                id: true,
+                confidentalReport: {
+                  select: {
+                    id: true,
+                    company_name: true,
+                    address: true,
+                    start_date: true,
+                    end_date: true,
+                    days_of_absence: true,
+                    department: true,
+                    is_edu_program: true,
+                    intern_evaluation: true,
+                    auth_name: true,
+                    auth_position: true,
+                    reg_number: true,
+                    auth_tc_number: true,
+                    auth_title: true,
+                    desc: true,
+                  },
+                },
+              },
+            },
+            student: {
+              select: {
+                id: true,
+                name: true,
+                last_name: true,
+                school_number: true,
+                tc_number: true,
+              },
+            },
+            form: {
+              select: {
+                edu_program: true,
+                student_info: {
+                  select: {
+                    birth_date: true,
+                    birth_place: true,
+                  },
+                },
                 start_date: true,
                 end_date: true,
-                days_of_absence: true,
-                department: true,
-                is_edu_program: true,
-                intern_evaluation: true,
-                auth_name: true,
-                auth_position: true,
-                reg_number: true,
-                auth_tc_number: true,
-                auth_title: true,
-                desc: true,
+                company_info: {
+                  select: {
+                    name: true,
+                    address: true,
+                  },
+                },
               },
             },
           },
-        },
-        student: {
-          select: {
-            id: true,
-            name: true,
-            last_name: true,
-            school_number: true,
-            tc_number: true,
-          },
-        },
-        form: {
-          select: {
-            edu_program: true,
-            student_info: {
-              select: {
-                birth_date: true,
-                birth_place: true,
-              },
-            },
-            start_date: true,
-            end_date: true,
-            company_info: {
-              select: {
-                name: true,
-                address: true,
-              },
-            },
-          },
-        },
-      },
-    });
+        });
 
-    res.status(200).json({ data: internStatus });
+        res.status(200).json({ data: internStatus });
+      },
+      {
+        maxWait: 50000, // default: 2000
+        timeout: 100000, // default: 5000
+      }
+    );
   } catch (error) {
     next(error);
   }
@@ -242,7 +265,6 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
 
 export const createCompanyConfidentalReport = async (req, res, next) => {
   try {
-    // TODO: createCompanyConfidentalReport
     const {
       confidentalReportToken,
       company_name,

@@ -37,72 +37,80 @@ export const startInterviews = async (req, res, next) => {
 
     // const { date, comissionId, interviewId } = interviews;
 
-    console.log("egeA", interviews);
+    await prisma.$transaction(
+      async (prisma) => {
+        for (let index = 0; index < interviews.length; index++) {
+          const interview = await prisma.interview.findUnique({
+            where: { id: interviews[index].interviewId },
+          });
 
-    for (let index = 0; index < interviews.length; index++) {
-      const interview = await prisma.interview.findUnique({
-        where: { id: interviews[index].interviewId },
-      });
+          if (!interview) {
+            throw new BadRequestError(errorCodes.NOT_FOUND);
+          }
 
-      if (!interview) {
-        throw new BadRequestError(errorCodes.NOT_FOUND);
-      }
+          interviews[index] = {
+            ...interviews[index],
+            student_id: interview.student_id,
+          };
 
-      interviews[index] = {
-        ...interviews[index],
-        student_id: interview.student_id,
-      };
+          const interviewCreate = createManyInterviewAdapter(
+            interviews[index],
+            userId
+          );
 
-      const interviewCreate = createManyInterviewAdapter(
-        interviews[index],
-        userId
-      );
+          await prisma.interview.update({
+            where: { id: interview.id },
+            data: interviewCreate,
+          });
 
-      await prisma.interview.update({
-        where: { id: interview.id },
-        data: interviewCreate,
-      });
-
-      const releatedInternStatus = await prisma.internStatus.findUnique({
-        where: {
-          interview_id: interview.id,
-        },
-      });
-
-      const newInternStatusTrack = await prisma.internStatusTrack.create({
-        data: {
-          createdBy: {
-            connect: {
-              id: userId,
+          const releatedInternStatus = await prisma.internStatus.findUnique({
+            where: {
+              interview_id: interview.id,
             },
-          },
-          prevStatus: releatedInternStatus.status,
-          nextStatus: InternStatus.MLK02,
-          desc: "",
-          internStatus: {
-            connect: {
+          });
+
+          const newInternStatusTrack = await prisma.internStatusTrack.create({
+            data: {
+              createdBy: {
+                connect: {
+                  id: userId,
+                },
+              },
+              prevStatus: releatedInternStatus.status,
+              nextStatus: InternStatus.MLK02,
+              desc: "",
+              internStatus: {
+                connect: {
+                  id: releatedInternStatus.id,
+                },
+              },
+            },
+          });
+
+          await prisma.internStatus.update({
+            where: {
               id: releatedInternStatus.id,
             },
-          },
-        },
-      });
-
-      await prisma.internStatus.update({
-        where: {
-          id: releatedInternStatus.id,
-        },
-        data: {
-          updatedBy: {
-            connect: {
-              id: userId,
+            data: {
+              updatedBy: {
+                connect: {
+                  id: userId,
+                },
+              },
+              status: InternStatus.MLK02,
             },
-          },
-          status: InternStatus.MLK02,
-        },
-      });
-    }
+          });
+        }
 
-    return res.status(200).json({ message: "interviews updated succesfully" });
+        return res
+          .status(200)
+          .json({ message: "interviews updated succesfully" });
+      },
+      {
+        maxWait: 100000, // default: 2000
+        timeout: 180000, // default: 5000
+      }
+    );
   } catch (error) {
     next(error);
   }
