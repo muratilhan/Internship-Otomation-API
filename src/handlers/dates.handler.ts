@@ -36,6 +36,9 @@ export const calculateBussinesDates = (
 };
 
 export const formatDate = (date) => {
+  if (!date) {
+    return "";
+  }
   const day = String(date.getDate()).padStart(2, "0"); // Gün (iki haneli olacak şekilde)
   const month = String(date.getMonth() + 1).padStart(2, "0"); // Ay (1 ay eklemeliyiz çünkü ay sıfırdan başlar)
   const year = date.getFullYear(); // Yıl
