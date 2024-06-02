@@ -1,6 +1,7 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import InternStatus, { InternStatusLabels } from "../../enums/internStatus";
+import resultCodes from "../../enums/resultCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { formatDate } from "../../handlers/dates.handler";
 import { releatedRecordQueryControl } from "../../handlers/query.handler";
@@ -233,7 +234,7 @@ export const getInternStatusById = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: internStatus });
+    return res.status(200).json({ data: internStatus });
   } catch (error) {
     next(error);
   }
@@ -386,7 +387,7 @@ export const updateInternStatus = async (req, res, next) => {
         },
       });
 
-      res.status(200).json({ message: "intern status updated succesfully" });
+      return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
     });
   } catch (error) {
     next(error);
@@ -435,7 +436,7 @@ export const getInternStatusAC = async (req, res, next) => {
         translate: internStatus.status,
       }));
 
-    res.status(200).json({ data: modifiedInternForms || [] });
+    return res.status(200).json({ data: modifiedInternForms || [] });
   } catch (error) {
     next(error);
   }

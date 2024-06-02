@@ -1,6 +1,7 @@
 import UserRoles from "../../config/rolesList";
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
 import {
@@ -140,7 +141,9 @@ export const getForms = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: internForms, dataLength: internFormCount });
+    return res
+      .status(200)
+      .json({ data: internForms, dataLength: internFormCount });
   } catch (e) {
     next(e);
   }
@@ -342,7 +345,7 @@ export const getFormById = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    res.status(200).json({ data: internForm });
+    return res.status(200).json({ data: internForm });
   } catch (e) {
     next(e);
   }
@@ -520,7 +523,7 @@ export const deleteForm = async (req, res, next) => {
         data: updateData,
       });
 
-      return res.status(200).json({ message: "Form deleted succesfully" });
+      return res.status(200).json({ message: resultCodes.DELETE_SUCCES });
     });
   } catch (e) {
     next(e);
@@ -561,7 +564,7 @@ export const getInternFormAC = async (req, res, next) => {
       subtext: `${internForm.start_date}\n${internForm.end_date}\n${internForm.company_info.name}`,
     }));
 
-    res.status(200).json({ data: modifiedInternForms || [] });
+    return res.status(200).json({ data: modifiedInternForms || [] });
   } catch (error) {
     next(error);
   }
@@ -589,7 +592,9 @@ export const unlockInternFormSeal = async (req, res, next) => {
         },
       });
 
-      return res.status(200).json({ message: "Mühür güncellendi" });
+      return res
+        .status(200)
+        .json({ message: resultCodes.SEAL_UPDATED_SUCCESS });
     });
   } catch (error) {
     next(error);

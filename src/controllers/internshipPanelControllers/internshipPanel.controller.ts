@@ -1,6 +1,7 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
 import InternStatus from "../../enums/internStatus";
+import resultCodes from "../../enums/resultCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 
 // TODO: internShip panel services
@@ -202,7 +203,7 @@ export const addNewActiveFollowUp = async (req, res, next) => {
       },
     });
 
-    return res.status(200).json({ message: "succesfully init" });
+    return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -252,7 +253,7 @@ export const updateActiveFollowUp = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    return res.status(200).json({ message: "record updated successfully" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }

@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { generateCompanyConfidentalReportToken } from "../../handlers/auth.handler";
 import { formatDate, isSameDay } from "../../handlers/dates.handler";
@@ -251,7 +252,7 @@ export const getCompanyConfidentalReport = async (req, res, next) => {
           },
         });
 
-        res.status(200).json({ data: internStatus });
+        return res.status(200).json({ data: internStatus });
       },
       {
         maxWait: 50000, // default: 2000
@@ -330,10 +331,7 @@ export const createCompanyConfidentalReport = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({
-      // data: confidentalReport,
-      message: "confidentalReport added successfully",
-    });
+    return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
   } catch (error) {
     next(error);
   }

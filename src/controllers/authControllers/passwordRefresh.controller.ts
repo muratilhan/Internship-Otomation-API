@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { BadRequestError } from "../../errors/BadRequestError";
 import {
   generatePasswordChangeToken,
@@ -12,29 +13,32 @@ export const sendPasswordRefresh = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email: email } });
-    if (!user) throw new BadRequestError(errorCodes.EMAIL_NOT_FOUND);
+    await prisma.$transaction(async (prisma) => {
+      const user = await prisma.user.findUnique({ where: { email: email } });
+      if (!user) throw new BadRequestError(errorCodes.EMAIL_NOT_FOUND);
 
-    const passwordRefreshToken = await generatePasswordChangeToken(
-      user.email,
-      user.id
-    );
+      const passwordRefreshToken = await generatePasswordChangeToken(
+        user.email,
+        user.id
+      );
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordChangeToken: passwordRefreshToken },
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordChangeToken: passwordRefreshToken },
+      });
+
+      const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
+      await sendEmail(user.email, "Şifre Yenileme", "passwordReset", {
+        link: link,
+        name: user.name,
+        lastName: user.last_name,
+      });
+
+      return res
+        .status(200)
+        .json({ message: resultCodes.EMAIL_SENDED_SUCCESS });
     });
-
-    const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    await sendEmail(user.email, "Şifre Yenileme", "passwordReset", {
-      link: link,
-      name: user.name,
-      lastName: user.last_name,
-    });
-
-    res.send("password reset link sent to your email account");
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -68,9 +72,8 @@ export const changePassword = async (req, res, next) => {
       data: { passwordChangeToken: "", password: await hashPassword(password) },
     });
 
-    res.status(200).json({ message: "password reset sucessfully." });
+    return res.status(200).json({ message: resultCodes.PWD_RESET_SUCCESS });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };

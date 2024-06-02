@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
 import { isSealedQueryCheck } from "../../handlers/query.handler";
@@ -30,7 +31,7 @@ export const addStudentInfo = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "Student Info added succesfully" });
+    return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -79,7 +80,7 @@ export const updateStudentInfo = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "Student Info updated succesfully" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }

@@ -147,7 +147,9 @@ export const addNewConfidentalReport = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "confidentalReport added successfully" });
+    return res
+      .status(200)
+      .json({ message: "confidentalReport added successfully" });
   } catch (error) {
     next(error);
   }

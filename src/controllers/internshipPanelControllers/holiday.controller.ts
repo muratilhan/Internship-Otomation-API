@@ -1,10 +1,13 @@
 import prisma from "../../db";
+import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
+import { BadRequestError } from "../../errors/BadRequestError";
 
 export const getHolidays = async (req, res, next) => {
   try {
     const holidays = await prisma.holidays.findMany();
 
-    res.status(200).json({ data: holidays });
+    return res.status(200).json({ data: holidays });
   } catch (error) {
     next(error);
   }
@@ -20,7 +23,7 @@ export const addHoliday = async (req, res, next) => {
         desc: desc,
       },
     });
-    res.status(200).json({ message: "holiday created succesfully" });
+    return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -37,10 +40,10 @@ export const deleteHoliday = async (req, res, next) => {
     });
 
     if (!deletedHoliday) {
-      return res.status(404).json({ message: "oops" });
+      throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    return res.status(200).json({ message: "succesfully deleted" });
+    return res.status(200).json({ message: resultCodes.DELETE_SUCCES });
   } catch (error) {
     next(error);
   }

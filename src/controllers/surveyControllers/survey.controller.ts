@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { AuthorizationError } from "../../errors/AuthorizationError";
 import { BadRequestError } from "../../errors/BadRequestError";
 import {
@@ -140,7 +141,7 @@ export const getAllSurveys = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: surveys, dataLength: surveyCount });
+    return res.status(200).json({ data: surveys, dataLength: surveyCount });
   } catch (e) {
     next(e);
   }
@@ -186,7 +187,7 @@ export const getSingleSurvey = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    res.status(200).json({ data: survey });
+    return res.status(200).json({ data: survey });
   } catch (e) {
     next(e);
   }
@@ -241,7 +242,7 @@ export const addNewSurvey = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "Survey added successfully" });
+    return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -296,7 +297,7 @@ export const updateSurvey = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "survey has been updated succesfully" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -385,7 +386,7 @@ export const getCompanyInfoForSurvey = async (req, res, next) => {
       throw new BadRequestError(errorCodes.NOT_FOUND);
     }
 
-    res.status(200).json({ data: internStatus });
+    return res.status(200).json({ data: internStatus });
   } catch (error) {
     next(error);
   }
@@ -412,7 +413,7 @@ export const unlockSurveySeal = async (req, res, next) => {
       },
     });
 
-    return res.status(200).json({ message: "Mühür güncellendi" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }

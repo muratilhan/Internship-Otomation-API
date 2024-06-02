@@ -6,6 +6,7 @@ import errorCodes from "../../enums/errorCodes";
 import { generatePasswordChangeToken } from "../../handlers/auth.handler";
 import { sendEmail } from "../../handlers/email.handler";
 import ExcelJS from "exceljs";
+import resultCodes from "../../enums/resultCodes";
 
 export const getUsers = async (req, res, next) => {
   try {
@@ -106,7 +107,7 @@ export const getUsers = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: users, dataLength: userCount });
+    return res.status(200).json({ data: users, dataLength: userCount });
   } catch (e) {
     next(e);
   }
@@ -155,7 +156,7 @@ export const addUser = async (req, res, next) => {
         lastName: newUser.last_name,
       });
 
-      res.status(200).json({ message: "User created succesfully" });
+      return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
     });
   } catch (e) {
     next(e);
@@ -197,7 +198,7 @@ export const updateUser = async (req, res, next) => {
       },
     });
 
-    return res.status(200).json({ message: "User updated succesfully" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }
@@ -228,7 +229,7 @@ export const addMultipleUser = async (req, res, next) => {
       data: userData,
       skipDuplicates: true,
     });
-    res.status(200).json({ message: "Users created succesfully" });
+    return res.status(200).json({ message: "Users created succesfully" });
   } catch (e) {
     next(e);
   }
@@ -291,7 +292,7 @@ export const getUserById = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ data: user });
+    return res.status(200).json({ data: user });
   } catch (e) {
     next(e);
   }
@@ -318,7 +319,7 @@ export const deleteUserById = async (req, res, next) => {
       },
     });
 
-    res.status(200).json({ message: "User deleted" });
+    return res.status(200).json({ message: resultCodes.DELETE_SUCCES });
   } catch (e) {
     next(e);
   }
@@ -363,7 +364,7 @@ export const getStudentAC = async (req, res, next) => {
       subtext: student.school_number ? student.school_number : "",
     }));
 
-    res.status(200).json({ data: modifiedStudents || [] });
+    return res.status(200).json({ data: modifiedStudents || [] });
   } catch (error) {
     next(error);
   }
@@ -399,7 +400,7 @@ export const getComissionAC = async (req, res, next) => {
       subtext: user.user_type ? user.user_type : "",
     }));
 
-    res.status(200).json({ data: modifiedComissions || [] });
+    return res.status(200).json({ data: modifiedComissions || [] });
   } catch (error) {
     next(error);
   }

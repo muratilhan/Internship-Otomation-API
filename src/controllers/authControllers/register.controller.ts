@@ -7,6 +7,7 @@ import {
   hashPassword,
 } from "../../handlers/auth.handler";
 import { sendEmail } from "../../handlers/email.handler";
+import resultCodes from "../../enums/resultCodes";
 
 const emailRegex = /^[0-9]{9}@ogr\.uludag\.edu\.tr$/;
 
@@ -56,7 +57,7 @@ export const newUser = async (req, res, next) => {
     const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
     // await sendEmail(newUser.email, "Staj Otomasyonu Şifre Oluşturma", link);
 
-    res.status(200).json({ message: "User created succesfully" });
+    return res.status(200).json({ message: resultCodes.SIGN_UP_SUCCESS });
   } catch (err) {
     next(err);
   }
