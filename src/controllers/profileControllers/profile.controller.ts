@@ -1,5 +1,6 @@
 import prisma from "../../db";
 import errorCodes from "../../enums/errorCodes";
+import resultCodes from "../../enums/resultCodes";
 import { AuthenticationError } from "../../errors/AuthenticationError";
 import { BadRequestError } from "../../errors/BadRequestError";
 
@@ -57,7 +58,7 @@ export const updateMyProfile = async (req, res, next) => {
       },
     });
 
-    res.json({ message: "Profile updated succesfully" });
+    return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
   } catch (error) {
     next(error);
   }
