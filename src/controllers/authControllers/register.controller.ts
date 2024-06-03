@@ -55,7 +55,16 @@ export const newUser = async (req, res, next) => {
     });
 
     const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-    // await sendEmail(newUser.email, "Staj Otomasyonu Şifre Oluşturma", link);
+    await sendEmail(
+      newUser.email,
+      "Staj Otomasyonu Şifre Oluşturma",
+      "signUp",
+      {
+        link: link,
+        name: newUser.name,
+        lastName: newUser.last_name,
+      }
+    );
 
     return res.status(200).json({ message: resultCodes.SIGN_UP_SUCCESS });
   } catch (err) {
