@@ -119,45 +119,51 @@ export const addUser = async (req, res, next) => {
     const { email, name, lastName, userType, schoolNumber, tcNumber } =
       req.body;
 
-    await prisma.$transaction(async (prisma) => {
-      const randomString = Math.random().toString(36).substring(2);
+    await prisma.$transaction(
+      async (prisma) => {
+        const randomString = Math.random().toString(36).substring(2);
 
-      const newUser = await prisma.user.create({
-        data: {
-          email: email,
-          name: name,
-          last_name: lastName,
-          password: await bcrypt.hash(randomString, 10),
-          createdBy: {
-            connect: {
-              id: adminId,
+        const newUser = await prisma.user.create({
+          data: {
+            email: email,
+            name: name,
+            last_name: lastName,
+            password: await bcrypt.hash(randomString, 10),
+            createdBy: {
+              connect: {
+                id: adminId,
+              },
             },
+            user_type: userType,
+            school_number: schoolNumber,
+            tc_number: tcNumber,
           },
-          user_type: userType,
-          school_number: schoolNumber,
-          tc_number: tcNumber,
-        },
-      });
+        });
 
-      const passwordRefreshToken = await generatePasswordChangeToken(
-        newUser.email,
-        newUser.id
-      );
+        const passwordRefreshToken = await generatePasswordChangeToken(
+          newUser.email,
+          newUser.id
+        );
 
-      await prisma.user.update({
-        where: { id: newUser.id },
-        data: { passwordChangeToken: passwordRefreshToken },
-      });
+        await prisma.user.update({
+          where: { id: newUser.id },
+          data: { passwordChangeToken: passwordRefreshToken },
+        });
 
-      const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
-      await sendEmail(newUser.email, "Şifre Oluşturma", "signUp", {
-        link: link,
-        name: newUser.name,
-        lastName: newUser.last_name,
-      });
+        const link = `${process.env.CLIENT_URL}/password-reset/${passwordRefreshToken}`;
+        await sendEmail(newUser.email, "Şifre Oluşturma", "signUp", {
+          link: link,
+          name: newUser.name,
+          lastName: newUser.last_name,
+        });
 
-      return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
-    });
+        return res.status(200).json({ message: resultCodes.CREATE_SUCCESS });
+      },
+      {
+        maxWait: 10000, // default: 2000
+        timeout: 50000, // default: 5000
+      }
+    );
   } catch (e) {
     next(e);
   }

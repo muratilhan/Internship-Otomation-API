@@ -213,37 +213,43 @@ export const deleteConfidentalReport = async (req, res, next) => {
   try {
     const confidentalReportId = req.params.confidentalReportId;
 
-    await prisma.$transaction(async (prisma) => {
-      const deletedRecord = await prisma.confidentalReport.findUnique({
-        where: { id: confidentalReportId },
-        include: {
-          interview: true,
-        },
-      });
+    await prisma.$transaction(
+      async (prisma) => {
+        const deletedRecord = await prisma.confidentalReport.findUnique({
+          where: { id: confidentalReportId },
+          include: {
+            interview: true,
+          },
+        });
 
-      if (!deletedRecord) {
-        throw new BadRequestError(errorCodes.NOT_FOUND);
+        if (!deletedRecord) {
+          throw new BadRequestError(errorCodes.NOT_FOUND);
+        }
+
+        let updateData = {
+          isDeleted: true,
+          isSealed: false,
+        };
+
+        if (deletedRecord?.interview?.id) {
+          const obj = { interview: { disconnect: true } };
+          updateData = Object.assign(obj, updateData);
+        }
+
+        await prisma.confidentalReport.update({
+          where: { id: confidentalReportId },
+          data: updateData,
+        });
+
+        return res
+          .status(200)
+          .json({ message: "confidentalReport deleted succesfully" });
+      },
+      {
+        maxWait: 50000, // default: 2000
+        timeout: 100000, // default: 5000
       }
-
-      let updateData = {
-        isDeleted: true,
-        isSealed: false,
-      };
-
-      if (deletedRecord?.interview?.id) {
-        const obj = { interview: { disconnect: true } };
-        updateData = Object.assign(obj, updateData);
-      }
-
-      await prisma.confidentalReport.update({
-        where: { id: confidentalReportId },
-        data: updateData,
-      });
-
-      return res
-        .status(200)
-        .json({ message: "confidentalReport deleted succesfully" });
-    });
+    );
   } catch (e) {
     next(e);
   }

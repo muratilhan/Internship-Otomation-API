@@ -251,106 +251,32 @@ export const updateInternStatus = async (req, res, next) => {
     const optionalDesc = desc || "";
     let newStatus = status;
 
-    await prisma.$transaction(async (prisma) => {
-      const internStatus = await prisma.internStatus.findUnique({
-        where: {
-          id: internStatusId,
-        },
-        select: {
-          id: true,
-          status: true,
-          student_id: true,
-          interview: {
-            select: {
-              id: true,
-              survey: {
-                select: {
-                  id: true,
-                },
-              },
-            },
+    await prisma.$transaction(
+      async (prisma) => {
+        const internStatus = await prisma.internStatus.findUnique({
+          where: {
+            id: internStatusId,
           },
-        },
-      });
-
-      if (!internStatus) {
-        throw new BadRequestError(errorCodes.NOT_FOUND);
-      }
-
-      const newInternStatusTrack = await prisma.internStatusTrack.create({
-        data: {
-          createdBy: {
-            connect: {
-              id: userId,
-            },
-          },
-          prevStatus: internStatus.status,
-          nextStatus: status,
-          desc: optionalDesc,
-          internStatus: {
-            connect: {
-              id: internStatus.id,
-            },
-          },
-        },
-      });
-
-      let sealForm = {};
-      let sealSurvey = {};
-
-      if (internStatus.status === InternStatus.FRM01) {
-        sealForm = {
-          update: {
-            data: {
-              isSealed: true,
-            },
-          },
-        };
-      }
-
-      if (
-        internStatus.status === InternStatus.MLK01 &&
-        (status === InternStatus.MLK03 || status === InternStatus.MLK02)
-      ) {
-        if (internStatus?.interview?.survey?.id) {
-          sealSurvey = {
-            update: {
-              survey: {
-                update: {
-                  data: {
-                    isSealed: true,
+          select: {
+            id: true,
+            status: true,
+            student_id: true,
+            interview: {
+              select: {
+                id: true,
+                survey: {
+                  select: {
+                    id: true,
                   },
                 },
-              },
-            },
-          };
-        }
-      }
-
-      if (status === InternStatus.FRM03 && !internStatus?.interview?.id) {
-        const newInterview = await prisma.interview.create({
-          data: {
-            createdBy: {
-              connect: {
-                id: userId,
-              },
-            },
-
-            internStatus: {
-              connect: {
-                id: internStatus.id,
-              },
-            },
-
-            student: {
-              connect: {
-                id: internStatus.student_id,
               },
             },
           },
         });
 
-        newStatus = InternStatus.MLK01;
+        if (!internStatus) {
+          throw new BadRequestError(errorCodes.NOT_FOUND);
+        }
 
         const newInternStatusTrack = await prisma.internStatusTrack.create({
           data: {
@@ -359,8 +285,8 @@ export const updateInternStatus = async (req, res, next) => {
                 id: userId,
               },
             },
-            prevStatus: status,
-            nextStatus: newStatus,
+            prevStatus: internStatus.status,
+            nextStatus: status,
             desc: optionalDesc,
             internStatus: {
               connect: {
@@ -369,26 +295,106 @@ export const updateInternStatus = async (req, res, next) => {
             },
           },
         });
-      }
 
-      const updatedInternStatus = await prisma.internStatus.update({
-        where: {
-          id: internStatusId,
-        },
-        data: {
-          updatedBy: {
-            connect: {
-              id: userId,
+        let sealForm = {};
+        let sealSurvey = {};
+
+        if (internStatus.status === InternStatus.FRM01) {
+          sealForm = {
+            update: {
+              data: {
+                isSealed: true,
+              },
             },
-          },
-          status: newStatus,
-          form: sealForm,
-          interview: sealSurvey,
-        },
-      });
+          };
+        }
 
-      return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
-    });
+        if (
+          internStatus.status === InternStatus.MLK01 &&
+          (status === InternStatus.MLK03 || status === InternStatus.MLK02)
+        ) {
+          if (internStatus?.interview?.survey?.id) {
+            sealSurvey = {
+              update: {
+                survey: {
+                  update: {
+                    data: {
+                      isSealed: true,
+                    },
+                  },
+                },
+              },
+            };
+          }
+        }
+
+        if (status === InternStatus.FRM03 && !internStatus?.interview?.id) {
+          const newInterview = await prisma.interview.create({
+            data: {
+              createdBy: {
+                connect: {
+                  id: userId,
+                },
+              },
+
+              internStatus: {
+                connect: {
+                  id: internStatus.id,
+                },
+              },
+
+              student: {
+                connect: {
+                  id: internStatus.student_id,
+                },
+              },
+            },
+          });
+
+          newStatus = InternStatus.MLK01;
+
+          const newInternStatusTrack = await prisma.internStatusTrack.create({
+            data: {
+              createdBy: {
+                connect: {
+                  id: userId,
+                },
+              },
+              prevStatus: status,
+              nextStatus: newStatus,
+              desc: optionalDesc,
+              internStatus: {
+                connect: {
+                  id: internStatus.id,
+                },
+              },
+            },
+          });
+        }
+
+        const updatedInternStatus = await prisma.internStatus.update({
+          where: {
+            id: internStatusId,
+          },
+          data: {
+            updatedBy: {
+              connect: {
+                id: userId,
+              },
+            },
+            status: newStatus,
+            form: sealForm,
+            interview: sealSurvey,
+          },
+        });
+
+        return res.status(200).json({ message: resultCodes.UPDATE_SUCCESS });
+      },
+      {
+        maxWait: 10000, // default: 2000
+        timeout: 50000, // default: 5000
+      }
+    );
   } catch (error) {
     next(error);
   }
