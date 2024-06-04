@@ -36,33 +36,38 @@ export const deleteEduYear = async (req, res, next) => {
   try {
     const { eduYearId } = req.params;
 
-    await prisma.$transaction(async (prisma) => {
-      // EduYear'ı sil
+    await prisma.$transaction(
+      async (prisma) => {
+        // EduYear'ı sil
 
-      // EduYear'a bağlı olan formları ilişkilerini kes
-      await prisma.internForm.updateMany({
-        where: {
-          edu_year: {
+        // EduYear'a bağlı olan formları ilişkilerini kes
+        await prisma.internForm.updateMany({
+          where: {
+            edu_year: {
+              id: eduYearId * 1,
+            },
+          },
+          data: {
+            edu_year_id: null,
+          },
+        });
+
+        const deletedEduYear = await prisma.eduYear.delete({
+          where: {
             id: eduYearId * 1,
           },
-        },
-        data: {
-          edu_year_id: null,
-        },
-      });
+        });
 
-      const deletedEduYear = await prisma.eduYear.delete({
-        where: {
-          id: eduYearId * 1,
-        },
-      });
-
-      if (!deletedEduYear) {
-        throw new BadRequestError(errorCodes.NOT_FOUND);
+        if (!deletedEduYear) {
+          throw new BadRequestError(errorCodes.NOT_FOUND);
+        }
+        return res.status(200).json({ message: resultCodes.DELETE_SUCCES });
+      },
+      {
+        maxWait: 10000, // default: 2000
+        timeout: 50000, // default: 5000
       }
-    });
-
-    return res.status(200).json({ message: resultCodes.DELETE_SUCCES });
+    );
   } catch (error) {
     next(error);
   }

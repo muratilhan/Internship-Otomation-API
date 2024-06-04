@@ -361,79 +361,85 @@ export const updateForm = async (req, res, next) => {
     const { studentId, startDate, endDate, eduYearId, isInTerm, weekDayWork } =
       req.body;
 
-    await prisma.$transaction(async (prisma) => {
-      const isStudentWorkOnSaturday = weekDayWork.includes(6);
-      const holidays = await prisma.holidays.findMany({
-        select: { date: true },
-      });
+    await prisma.$transaction(
+      async (prisma) => {
+        const isStudentWorkOnSaturday = weekDayWork.includes(6);
+        const holidays = await prisma.holidays.findMany({
+          select: { date: true },
+        });
 
-      const totalWorkDay = calculateBussinesDates(
-        startDate,
-        endDate,
-        holidays,
-        weekDayWork
-      );
+        const totalWorkDay = calculateBussinesDates(
+          startDate,
+          endDate,
+          holidays,
+          weekDayWork
+        );
 
-      if (totalWorkDay > 60 || totalWorkDay < 1) {
-        throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
+        if (totalWorkDay > 60 || totalWorkDay < 1) {
+          throw new BadRequestError(errorCodes.INTF_TOTAL_DAY);
+        }
+
+        const adminUser = await prisma.user.findFirst({
+          where: {
+            user_type: UserRoles.admin,
+          },
+        });
+
+        const form = await prisma.internForm.findUnique({
+          where: {
+            id: internFormId,
+          },
+        });
+
+        if (isSealedQueryCheck(userRole, form.isSealed)) {
+          throw new AuthorizationError(errorCodes.NOT_PERMISSION);
+        }
+
+        const updatedForm = await prisma.internForm.update({
+          where: {
+            id: internFormId,
+          },
+          data: {
+            updatedBy: {
+              connect: {
+                id: userId,
+              },
+            },
+            follow_up: {
+              connect: {
+                id: adminUser.id,
+              },
+            },
+            student: {
+              connect: {
+                id: studentId,
+              },
+            },
+
+            isInTerm: isInTerm,
+            weekDayWork: weekDayWork,
+            workOnSaturday: isStudentWorkOnSaturday,
+
+            total_work_day: totalWorkDay,
+            start_date: new Date(startDate),
+            end_date: new Date(endDate),
+            edu_year: {
+              connect: {
+                id: eduYearId,
+              },
+            },
+          },
+        });
+
+        res
+          .status(200)
+          .json({ data: updatedForm.id, message: "form updated succesfully" });
+      },
+      {
+        maxWait: 10000, // default: 2000
+        timeout: 50000, // default: 5000
       }
-
-      const adminUser = await prisma.user.findFirst({
-        where: {
-          user_type: UserRoles.admin,
-        },
-      });
-
-      const form = await prisma.internForm.findUnique({
-        where: {
-          id: internFormId,
-        },
-      });
-
-      if (isSealedQueryCheck(userRole, form.isSealed)) {
-        throw new AuthorizationError(errorCodes.NOT_PERMISSION);
-      }
-
-      const updatedForm = await prisma.internForm.update({
-        where: {
-          id: internFormId,
-        },
-        data: {
-          updatedBy: {
-            connect: {
-              id: userId,
-            },
-          },
-          follow_up: {
-            connect: {
-              id: adminUser.id,
-            },
-          },
-          student: {
-            connect: {
-              id: studentId,
-            },
-          },
-
-          isInTerm: isInTerm,
-          weekDayWork: weekDayWork,
-          workOnSaturday: isStudentWorkOnSaturday,
-
-          total_work_day: totalWorkDay,
-          start_date: new Date(startDate),
-          end_date: new Date(endDate),
-          edu_year: {
-            connect: {
-              id: eduYearId,
-            },
-          },
-        },
-      });
-
-      res
-        .status(200)
-        .json({ data: updatedForm.id, message: "form updated succesfully" });
-    });
+    );
   } catch (error) {
     next(error);
   }
@@ -575,27 +581,33 @@ export const unlockInternFormSeal = async (req, res, next) => {
     const { internFormId } = req.params;
     const userId = req.id;
 
-    await prisma.$transaction(async (prisma) => {
-      const internForm = await prisma.internForm.findUnique({
-        where: { id: internFormId },
-      });
+    await prisma.$transaction(
+      async (prisma) => {
+        const internForm = await prisma.internForm.findUnique({
+          where: { id: internFormId },
+        });
 
-      const updatedForm = await prisma.internForm.update({
-        where: { id: internForm.id },
-        data: {
-          updatedBy: {
-            connect: {
-              id: userId,
+        const updatedForm = await prisma.internForm.update({
+          where: { id: internForm.id },
+          data: {
+            updatedBy: {
+              connect: {
+                id: userId,
+              },
             },
+            isSealed: internForm.isSealed ? false : true,
           },
-          isSealed: internForm.isSealed ? false : true,
-        },
-      });
+        });
 
-      return res
-        .status(200)
-        .json({ message: resultCodes.SEAL_UPDATED_SUCCESS });
-    });
+        return res
+          .status(200)
+          .json({ message: resultCodes.SEAL_UPDATED_SUCCESS });
+      },
+      {
+        maxWait: 10000, // default: 2000
+        timeout: 50000, // default: 5000
+      }
+    );
   } catch (error) {
     next(error);
   }
