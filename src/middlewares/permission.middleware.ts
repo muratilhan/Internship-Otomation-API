@@ -1,10 +1,22 @@
-export const verifyRoles = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req?.roles) return res.sendStatus(403);
-    const rolesArray = [...allowedRoles];
+import errorCodes from "../enums/errorCodes";
+import { AuthorizationError } from "../errors/AuthorizationError";
+import { permissionControll } from "../handlers/permission.handler";
 
-    const result = rolesArray.map((role) => role === req.roles);
-    if (!result) return res.sendStatus(403);
-    next();
+export const verifyRoles = (requiredRole) => {
+  return (req, res, next) => {
+    try {
+      if (!req?.roles) {
+        throw new AuthorizationError(errorCodes.NOT_PERMISSION);
+      }
+
+      const result = permissionControll(req.roles, requiredRole);
+
+      if (!result) {
+        throw new AuthorizationError(errorCodes.NOT_PERMISSION);
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
   };
 };

@@ -13,44 +13,88 @@ import {
 import {
   addNewActiveFollowUp,
   getActiveFollowUp,
-  getConfidentalMailList,
   getInterviewReady,
   startInterviews,
   updateActiveFollowUp,
 } from "../controllers/internshipPanelControllers/internshipPanel.controller";
+import { verifyRoles } from "../middlewares/permission.middleware";
+import UserRoles from "../config/rolesList";
 
 const InternshipPanelRouter = express.Router();
 
 // Internship Panel
-InternshipPanelRouter.post("/startInterviews", startInterviews);
+InternshipPanelRouter.post(
+  "/startInterviews",
+  verifyRoles(UserRoles.admin),
+  startInterviews
+);
 
-InternshipPanelRouter.get("/ConfidentalMailList/get", getConfidentalMailList);
-
-InternshipPanelRouter.get("/InterviewReady/get", getInterviewReady);
+InternshipPanelRouter.get(
+  "/InterviewReady/get",
+  verifyRoles(UserRoles.admin),
+  getInterviewReady
+);
 
 // Holiday
-InternshipPanelRouter.post("/holiday/add", addHoliday);
+InternshipPanelRouter.post(
+  "/holiday/add",
+  verifyRoles(UserRoles.admin),
+  addHoliday
+);
 
-InternshipPanelRouter.delete("/holiday/delete/:holidayId", deleteHoliday);
+InternshipPanelRouter.delete(
+  "/holiday/delete/:holidayId",
+  verifyRoles(UserRoles.admin),
+  deleteHoliday
+);
 
-InternshipPanelRouter.get("/holiday/get", getHolidays);
+InternshipPanelRouter.get(
+  "/holiday/get",
+  verifyRoles(UserRoles.student),
+  getHolidays
+);
 
 // EduYear
-InternshipPanelRouter.post("/eduyear/add", addEduYear);
+InternshipPanelRouter.post(
+  "/eduyear/add",
+  verifyRoles(UserRoles.admin),
+  addEduYear
+);
 
-InternshipPanelRouter.delete("/eduyear/delete/:eduYearId", deleteEduYear);
+InternshipPanelRouter.delete(
+  "/eduyear/delete/:eduYearId",
+  verifyRoles(UserRoles.admin),
+  deleteEduYear
+);
 
-InternshipPanelRouter.get("/eduyear/get", getEduYears);
+InternshipPanelRouter.get(
+  "/eduyear/get",
+  verifyRoles(UserRoles.admin),
+  getEduYears
+);
 
-InternshipPanelRouter.get("/eduyear/autocomplete", getEduYearsAC);
+InternshipPanelRouter.get(
+  "/eduyear/autocomplete",
+  verifyRoles(UserRoles.student),
+  getEduYearsAC
+);
 
 // Active Follow Up
-InternshipPanelRouter.get("/activeFollowUp/get", getActiveFollowUp);
+InternshipPanelRouter.get(
+  "/activeFollowUp/get",
+  verifyRoles(UserRoles.admin),
+  getActiveFollowUp
+);
 
-InternshipPanelRouter.post("/activeFollowUp/add", addNewActiveFollowUp);
+InternshipPanelRouter.post(
+  "/activeFollowUp/add",
+  verifyRoles(UserRoles.admin),
+  addNewActiveFollowUp
+);
 
 InternshipPanelRouter.put(
   "/activeFollowUp/update/:activeFollowUpId",
+  verifyRoles(UserRoles.admin),
   updateActiveFollowUp
 );
 
