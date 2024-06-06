@@ -1,5 +1,6 @@
 import { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { CustomError } from "../errors/CustomError";
+import errorCodes from "../enums/errorCodes";
 
 export const errorHandler: ErrorRequestHandler = (
   error: Error,
@@ -14,5 +15,5 @@ export const errorHandler: ErrorRequestHandler = (
 
   return res
     .status(500)
-    .json({ message: { errorCode: "Beklenmeyen Bir hata oluştu" } });
+    .json({ message: { errorCode: errorCodes.UNEXPECTED } });
 };
