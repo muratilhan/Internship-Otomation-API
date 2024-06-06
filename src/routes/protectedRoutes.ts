@@ -9,10 +9,16 @@ import ConfidentalReportRouter from "./ConfidentalReportRoutes";
 import InterviewRouter from "./InterviewRoutes";
 import InternshipPanelRouter from "./InternshipPanelRoutes";
 import InternStatusRouter from "./InternStatusRoutes";
+import { verifyRoles } from "../middlewares/permission.middleware";
+import UserRoles from "../config/rolesList";
 
 const protectedRouter = express.Router();
-protectedRouter.use("/dashboard", DashboardRouter);
-protectedRouter.use("/profile", ProfileRouter);
+protectedRouter.use(
+  "/dashboard",
+  verifyRoles(UserRoles.student),
+  DashboardRouter
+);
+protectedRouter.use("/profile", verifyRoles(UserRoles.student), ProfileRouter);
 protectedRouter.use("/user", UserRouter);
 
 protectedRouter.use("/intern-status", InternStatusRouter);
