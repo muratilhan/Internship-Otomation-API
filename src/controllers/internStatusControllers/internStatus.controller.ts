@@ -410,11 +410,6 @@ export const getInternStatusAC = async (req, res, next) => {
       select: { id: true, name: true, last_name: true, school_number: true },
     };
     const internStatuses = await prisma.internStatus.findMany({
-      where: {
-        status: {
-          equals: InternStatus.FRM03,
-        },
-      },
       select: {
         id: true,
         student: selectStudentTag,
