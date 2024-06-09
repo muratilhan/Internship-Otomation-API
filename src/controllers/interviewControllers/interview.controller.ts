@@ -436,8 +436,6 @@ export const getInterviewAC = async (req, res, next) => {
         interview?.comission?.name || ""
       } - ${interview?.comission?.last_name || ""}`,
       translate: interview.internStatus.status,
-      surveyId: interview.survey_id,
-      confidentalReportId: interview.confidentalReport_id,
     }));
 
     return res.status(200).json({ data: modifiedInternForms || [] });

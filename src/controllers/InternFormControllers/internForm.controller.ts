@@ -476,52 +476,35 @@ export const deleteForm = async (req, res, next) => {
         internStatus: {
           update: {
             isDeleted: true,
+            interview: {
+              update: { isDeleted: true },
+            },
           },
         },
       };
 
-      if (deletedRecord.internStatus.interview) {
-        const updatedInterview = {
-          interview: {
+      if (deletedRecord.internStatus.interview.survey) {
+        updateData.internStatus.update.interview.update = {
+          ...updateData.internStatus.update.interview.update,
+          survey: {
             update: {
               isDeleted: true,
+              isSealed: false,
             },
           },
         };
-        updateData = Object.assign(
-          updatedInterview,
-          updateData.internStatus.update
-        );
+      }
 
-        if (deletedRecord.internStatus.interview.survey) {
-          const updatedSurvey = {
-            survey: {
-              update: {
-                isDeleted: true,
-                isSealed: false,
-              },
+      if (deletedRecord.internStatus.interview.confidentalReport) {
+        updateData.internStatus.update.interview.update = {
+          ...updateData.internStatus.update.interview.update,
+          confidentalReport: {
+            update: {
+              isDeleted: true,
+              isSealed: false,
             },
-          };
-          updateData = Object.assign(
-            updatedSurvey,
-            updateData.internStatus.update.interview.update
-          );
-        }
-
-        if (deletedRecord.internStatus.interview.confidentalReport) {
-          const updatedConfidentalReport = {
-            confidentalReport: {
-              update: {
-                isDeleted: true,
-                isSealed: false,
-              },
-            },
-          };
-          updateData = Object.assign(
-            updatedConfidentalReport,
-            updateData.internStatus.update.interview.update
-          );
-        }
+          },
+        };
       }
 
       await prisma.internForm.update({
