@@ -363,6 +363,7 @@ export const getCompanyInfoForSurvey = async (req, res, next) => {
         form: {
           select: {
             edu_program: true,
+            isInTerm: true,
             student_info: {
               select: {
                 birth_date: true,

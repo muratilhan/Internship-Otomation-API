@@ -1,6 +1,4 @@
 import prisma from "../../db";
-import errorCodes from "../../enums/errorCodes";
-import { AuthenticationError } from "../../errors/AuthenticationError";
 
 export const getInterviewsCount = async (req, res, next) => {
   try {

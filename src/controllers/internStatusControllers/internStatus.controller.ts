@@ -234,6 +234,10 @@ export const getInternStatusById = async (req, res, next) => {
       },
     });
 
+    if (!internStatus) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
     return res.status(200).json({ data: internStatus });
   } catch (error) {
     next(error);

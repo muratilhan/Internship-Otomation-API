@@ -116,9 +116,9 @@ export const sendCompanyConfidentalReportToken = async (req, res, next) => {
         );
         console.log("link", link);
 
-        res
+        return res
           .status(200)
-          .json({ message: "password reset link sent to company" });
+          .json({ message: resultCodes.EMAIL_SENDED_SUCCESS });
       },
       {
         maxWait: 50000, // default: 2000

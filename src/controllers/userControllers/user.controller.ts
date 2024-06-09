@@ -298,6 +298,10 @@ export const getUserById = async (req, res, next) => {
       },
     });
 
+    if (!user) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
     return res.status(200).json({ data: user });
   } catch (e) {
     next(e);

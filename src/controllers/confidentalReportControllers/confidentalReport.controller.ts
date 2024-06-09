@@ -320,9 +320,12 @@ export const getSingleConfidentalReport = async (req, res, next) => {
         },
       },
     });
-    res
-      .status(200)
-      .json({ data: confidentalReport, message: "selected data provided" });
+
+    if (!confidentalReport) {
+      throw new BadRequestError(errorCodes.NOT_FOUND);
+    }
+
+    return res.status(200).json({ data: confidentalReport });
   } catch (e) {
     next(e);
   }
